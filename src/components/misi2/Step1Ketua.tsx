@@ -8,7 +8,7 @@ import Lokasi2 from "@/assets/Lokasi2.png";
 import Lokasi3 from "@/assets/Lokasi3.png";
 import { cn } from "@/lib/utils";
 
-type CaseTopic = "plastik_kantin" | "alih_fungsi_lahan" | "pencemaran_air";
+import { CaseTopic, MISSION_1_DATA } from "@/lib/mission-data";
 
 const CASE_CONFIG: {
     id: CaseTopic;
@@ -18,56 +18,40 @@ const CASE_CONFIG: {
     selectedBorder: string;
 }[] = [
         {
-            id: "plastik_kantin",
-            label: "Isu Plastik Kantin Sekolah",
+            id: "sampah",
+            label: "Isu Tumpukan Sampah",
             bg: "bg-[#F9FFA4]",
             border: "border-[#D4D400]",
             selectedBorder: "border-[#EEDB24]",
         },
         {
-            id: "alih_fungsi_lahan",
-            label: "Isu Alih Fungsi Lahan",
-            bg: "bg-[#F0FFF0]",
-            border: "border-[#B4FF9F]",
+            id: "kendaraan",
+            label: "Isu Kendaraan Listrik",
+            bg: "bg-[#B4FF9F]",
+            border: "border-[#1A5C0A]",
             selectedBorder: "border-[#4CAF50]",
-        },
-        {
-            id: "pencemaran_air",
-            label: "Isu Pencemaran Air",
-            bg: "bg-[#EBF5FF]",
-            border: "border-[#B5D4F4]",
-            selectedBorder: "border-blue-400",
         },
     ];
 
-// Ilustrasi SVG sama dari Misi 1
+// Ilustrasi isometric PNG per lokasi
 function CaseIllustration({ id }: { id: CaseTopic }) {
-    if (id === "plastik_kantin") {
+    if (id === "sampah") {
         return (
-            <Image 
-                src={Lokasi1} 
-                alt="Kantin Sekolah" 
-                fill 
-                className="object-cover" 
+            <Image
+                src={Lokasi1}
+                alt="TPA Sarimukti"
+                fill
+                className="object-cover"
             />
         );
     }
-    if (id === "alih_fungsi_lahan") {
-        return (
-            <Image 
-                src={Lokasi2} 
-                alt="Lahan Hijau Desa" 
-                fill 
-                className="object-cover" 
-            />
-        );
-    }
+
     return (
-        <Image 
-            src={Lokasi3} 
-            alt="Sungai Pemukiman" 
-            fill 
-            className="object-cover" 
+        <Image
+            src={Lokasi2}
+            alt="Kendaraan Listrik"
+            fill
+            className="object-cover"
         />
     );
 }
@@ -173,15 +157,9 @@ export default function Step1Ketua({
                                     </p>
                                     <p className="text-xs text-gray-400" >
                                         Kasus: {" "}
-                                        {
-                                            selectedCase
-                                                ? selectedCase === "plastik_kantin"
-                                                    ? "Isu Plastik Kantin"
-                                                    : selectedCase === "alih_fungsi_lahan"
-                                                        ? "Isu Alih Fungsi Lahan"
-                                                        : "Isu Pencemaran Air"
-                                                : "Kasus yang dipilih"
-                                        }
+                                        {selectedCase
+                                            ? MISSION_1_DATA[selectedCase].title
+                                            : "Kasus yang dipilih"}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-1.5 bg-[#FCFEBA] text-[#7A6A00] text-xs font-bold px-3 py-1.5 rounded-full" >
@@ -209,7 +187,7 @@ export default function Step1Ketua({
                                 <label className="text-[10px] font-bold text-[#7A7200] uppercase tracking-wide mb-3 block" >
                                     Pilih Topik Untuk Tim Kamu
                                 </label>
-                                < div className="grid grid-cols-3 gap-3" >
+                                < div className="grid grid-cols-2 gap-3" >
                                     {
                                         CASE_CONFIG.map((c) => (
                                             <button

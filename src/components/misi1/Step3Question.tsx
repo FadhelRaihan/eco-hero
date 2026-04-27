@@ -1,25 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, ArrowRight, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-type CaseTopic = "plastik_kantin" | "alih_fungsi_lahan" | "pencemaran_air";
-
-const QUESTIONS: Record<CaseTopic, string> = {
-    plastik_kantin:
-        "Jika penjual kantin berhenti memakai plastik, apa yang akan terjadi pada keuntungan mereka? Tapi jika mereka terus memakai plastik, apa yang terjadi pada selokan sekolah kita?",
-    alih_fungsi_lahan:
-        "Jika lahan hijau diubah menjadi bangunan, apa yang terjadi pada hewan dan tanaman yang tinggal di sana? Tapi jika lahan tidak dibangun, bagaimana masyarakat bisa punya tempat tinggal?",
-    pencemaran_air:
-        "Jika warga terus membuang sampah ke sungai, apa yang akan terjadi pada ikan dan air minum kita? Tapi mengapa warga sulit berhenti dari kebiasaan ini?",
-};
-
-const QUESTION_BOLD: Record<CaseTopic, string> = {
-    plastik_kantin: "Jika penjual kantin berhenti memakai plastik,",
-    alih_fungsi_lahan: "Jika lahan hijau diubah menjadi bangunan,",
-    pencemaran_air: "Jika warga terus membuang sampah ke sungai,",
-};
+import { CaseTopic, MISSION_1_DATA } from "@/lib/mission-data";
 
 interface Step3QuestionProps {
     caseTopic: CaseTopic;
@@ -36,86 +20,119 @@ export default function Step3Question({
     onSubmit,
     onLanjut,
 }: Step3QuestionProps) {
-    const [answer, setAnswer] = useState("");
-    const [error, setError] = useState("");
-
-    const question = QUESTIONS[caseTopic];
-    const boldPart = QUESTION_BOLD[caseTopic];
-    const restPart = question.replace(boldPart, "");
-
-    const displayValue = isCompleted ? (savedAnswer ?? "✓ Sudah dijawab") : answer;
+    const data = MISSION_1_DATA[caseTopic];
+    const [selectedOption, setSelectedOption] = useState<string>(savedAnswer || "");
 
     function handleLanjut() {
         if (isCompleted) {
             onLanjut();
             return;
         }
-        if (answer.trim().length < 10) {
-            setError("Jawaban minimal 10 karakter");
-            return;
+        if (selectedOption) {
+            onSubmit(selectedOption);
+            onLanjut();
         }
-        setError("");
-        onSubmit(answer.trim());
-        onLanjut();
     }
 
     return (
-        <div className="flex-1 flex flex-col">
-            <div className="flex-1 py-6">
-                {/* Section header */}
-                <div className="flex items-center gap-3 mb-6">
+        <div className="flex flex-col h-full overflow-hidden">
+            <div className="py-4">
+                {/* Header Tahap */}
+                <div className="flex items-center gap-3 mb-5 shrink-0">
                     <div className="w-8 h-8 rounded-full bg-[#B4FF9F] flex items-center justify-center">
                         <span className="text-[#1A5C0A] font-extrabold text-lg">3</span>
                     </div>
-                    <h2 className="text-md font-bold text-[#333333] uppercase tracking-wide">
-                        Pertanyaan Pemantik
-                    </h2>
+                    <div>
+                        <h2 className="text-sm font-black text-[#1A5C0A] uppercase tracking-wider leading-none mb-1">
+                            Refleksi Kritis
+                        </h2>
+                        <p className="text-[10px] font-bold text-[#333333]/40 uppercase tracking-widest">
+                            Tentukan Sikapmu
+                        </p>
+                    </div>
                 </div>
 
-                {/* Question card — white with green left border */}
-                <div className="rounded-2xl p-6 bg-[#F0FFF0] border-2 border-[#D4EFD0]">
-                    {/* Question text */}
-                    <p className="text-sm text-[#333333] leading-relaxed mb-5">
-                        <strong className="font-bold">{boldPart}</strong>
-                        {restPart}
-                    </p>
+                {/* Kartu Pertanyaan */}
+                <div className="rounded-3xl p-6 sm:p-10 bg-white border-2 border-[#1A5C0A]/10 shadow-xl relative overflow-hidden">
+                    {/* Dekorasi Ikon */}
+                    <HelpCircle className="absolute -top-6 -right-6 w-32 h-32 text-[#B4FF9F]/20 -rotate-12" />
 
-                    {/* Textarea */}
-                    <textarea
-                        value={isCompleted ? "✓ Sudah dijawab sebelumnya" : answer}
-                        onChange={(e) => {
-                            setAnswer(e.target.value);
-                            if (error) setError("");
-                        }}
-                        disabled={isCompleted}
-                        placeholder="Ketik jawabanmu di sini..."
-                        rows={8}
-                        className={cn(
-                            "w-full bg-[#FFFFFF] px-4 py-3 rounded-xl border border-[#D4EFD0] text-sm resize-none",
-                            "focus:outline-none focus:border-[#1A5C0A] transition-colors",
-                            "placeholder:text-[#333333]/30",
-                            isCompleted && "text-[#1A5C0A] border-[#1A5C0A] cursor-not-allowed"
+                    <div className="relative z-10">
+                        <h3 className="text-lg sm:text-xl font-bold text-[#333333] leading-relaxed mb-10 text-center sm:text-left">
+                            {data.question.text}
+                        </h3>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {data.question.options.map((option) => {
+                                const isSelected = selectedOption === option.value;
+                                return (
+                                    <button
+                                        key={option.value}
+                                        onClick={() => !isCompleted && setSelectedOption(option.value)}
+                                        disabled={isCompleted}
+                                        className={cn(
+                                            "group p-6 rounded-2xl border-2 transition-all duration-300 text-left relative overflow-hidden",
+                                            isSelected
+                                                ? "border-[#1A5C0A] bg-[#B4FF9F]/10 shadow-[0_0_20px_rgba(180,255,159,0.3)]"
+                                                : "border-gray-100 bg-gray-50 hover:border-[#1A5C0A]/30 hover:bg-white",
+                                            isCompleted && !isSelected && "opacity-40 grayscale-[0.5]"
+                                        )}
+                                    >
+                                        <div className="flex items-center justify-between relative z-10">
+                                            <span className={cn(
+                                                "font-black text-base transition-colors",
+                                                isSelected ? "text-[#1A5C0A]" : "text-[#333333]"
+                                            )}>
+                                                {option.label}
+                                            </span>
+
+                                            <div className={cn(
+                                                "w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all duration-300",
+                                                isSelected
+                                                    ? "bg-[#1A5C0A] border-[#1A5C0A] scale-110"
+                                                    : "bg-white border-gray-300 group-hover:border-[#1A5C0A]"
+                                            )}>
+                                                {isSelected && <Check size={16} strokeWidth={4} className="text-white" />}
+                                            </div>
+                                        </div>
+
+                                        {/* Efek Hover Background */}
+                                        {!isCompleted && !isSelected && (
+                                            <div className="absolute inset-0 bg-gradient-to-r from-[#B4FF9F]/0 to-[#B4FF9F]/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {isCompleted && (
+                            <div className="mt-10 flex items-center justify-center gap-2 py-3 px-6 bg-[#B4FF9F]/20 rounded-2xl border border-[#1A5C0A]/10 animate-in fade-in zoom-in duration-500">
+                                <div className="w-5 h-5 rounded-full bg-[#1A5C0A] flex items-center justify-center">
+                                    <Check size={12} className="text-white" strokeWidth={4} />
+                                </div>
+                                <span className="text-xs font-black text-[#1A5C0A] uppercase tracking-widest">
+                                    Pilihanmu telah tersimpan
+                                </span>
+                            </div>
                         )}
-                    />
-                    {error && (
-                        <p className="text-xs text-red-500 mt-2">{error}</p>
-                    )}
+                    </div>
                 </div>
             </div>
 
-            {/* Lanjut button */}
-            <div className="flex justify-end mt-4">
+            {/* Tombol Aksi */}
+            <div className="flex justify-center sm:justify-end">
                 <button
                     onClick={handleLanjut}
-                    disabled={!isCompleted && answer.trim().length < 10}
+                    disabled={!selectedOption}
                     className={cn(
-                        "flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer",
-                        isCompleted || answer.trim().length >= 10
-                            ? "bg-[#B4FF9F] text-[#1A5C0A] border border-[#1A5C0A] hover:bg-[#9AEF85] shadow-sm"
-                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        "group flex items-center justify-center gap-3 w-full sm:w-auto px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all duration-300",
+                        selectedOption
+                            ? "bg-[#1A5C0A] text-[#B4FF9F] hover:bg-[#134407] cursor-pointer"
+                            : "bg-gray-100 text-gray-300 cursor-not-allowed"
                     )}
                 >
-                    Lanjut →
+                    {isCompleted ? "Lanjut Ke Forum" : "Simpan & Lanjut"}
+                    <ArrowRight size={20} className={cn("transition-transform group-hover:translate-x-1", !selectedOption && "opacity-0")} strokeWidth={3} />
                 </button>
             </div>
         </div>

@@ -5,14 +5,7 @@ import { Crown, CheckCircle, Loader2, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BrainstormingData } from "@/hooks/useMission2";
 
-type ActionType = "poster" | "surat_usulan" | "filter_air" | "lainnya";
-
-const ACTION_OPTIONS: { id: ActionType; label: string }[] = [
-    { id: "poster", label: "Kampanye Poster" },
-    { id: "surat_usulan", label: "Surat Usulan" },
-    { id: "filter_air", label: "Filter Air" },
-    { id: "lainnya", label: "+ Lainnya" },
-];
+// Tidak lagi menggunakan pilihan tetap
 
 interface Step3BrainstormingProps {
     isKetua: boolean;
@@ -80,7 +73,6 @@ export default function Step3Brainstorming({
             solution: "",
             solution_reason: "",
             action_type: "poster",
-            action_custom: "",
             action_name: "",
             materials: "",
             target_audience: "",
@@ -264,40 +256,13 @@ export default function Step3Brainstorming({
                     )}>
                         <StepBadge num={3} label="Step 3: Rancangan aksi" done={false} />
 
-                        {/* Jenis aksi */}
-                        <div className="mb-4">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2 block">
-                                Jenis Aksi yang Akan Dibuat
-                            </label>
-                            <div className="flex gap-2 flex-wrap">
-                                {ACTION_OPTIONS.map((opt) => (
-                                    <button
-                                        key={opt.id}
-                                        onClick={() => update("action_type", opt.id)}
-                                        disabled={!isKetua || step !== 3}
-                                        className={cn(
-                                            "px-4 py-1.5 rounded-full text-[11px] font-bold border transition-all",
-                                            form.action_type === opt.id
-                                                ? "bg-[#FCFEBA] border-[#DECC18] text-[#7A6A00]"
-                                                : "bg-[#FFFFFF] border-gray-200 text-gray-500 hover:border-gray-300",
-                                            (!isKetua || step !== 3) && "cursor-not-allowed opacity-70"
-                                        )}
-                                    >
-                                        {opt.label}
-                                    </button>
-                                ))}
-                            </div>
-                            {form.action_type === "lainnya" && (
-                                <input
-                                    type="text"
-                                    value={form.action_custom ?? ""}
-                                    onChange={(e) => update("action_custom", e.target.value)}
-                                    placeholder="Tulis jenis aksimu..."
-                                    disabled={!isKetua || step !== 3}
-                                    className="mt-2 w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-eco-yellow-dark disabled:bg-gray-50 disabled:text-gray-500"
-                                />
-                            )}
-                        </div>
+                        <Field
+                            label="Jenis Aksi yang Akan Dibuat"
+                            value={form.action_type}
+                            onChange={(v) => update("action_type", v)}
+                            placeholder="Contoh: Kampanye Poster, Surat Usulan, Alat Filter, dll..."
+                            disabled={!isKetua || step !== 3}
+                        />
 
                         <Field
                             label="Nama Aksi/Produk"

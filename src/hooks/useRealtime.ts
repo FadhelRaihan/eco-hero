@@ -5,11 +5,15 @@ import { createClient } from "@/lib/supabase/client";
 
 interface RealtimeConfig {
     table: string;
-    filter?: string;        // contoh: "class_id=eq.abc123"
+    filter?: string;
     onInsert?: (payload: any) => void;
     onUpdate?: (payload: any) => void;
     onDelete?: (payload: any) => void;
+    enabled?: boolean;
 }
+
+// Singleton client untuk menghindari pembuatan banyak instance di browser
+let supabaseBrowserClient: any = null;
 
 export function useRealtime({
     table,
@@ -17,9 +21,13 @@ export function useRealtime({
     onInsert,
     onUpdate,
     onDelete,
+    enabled = true,
 }: RealtimeConfig) {
-    const supabase = createClient();
-    const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+    if (!supabaseBrowserClient) {
+        supabaseBrowserClient = createClient();
+    }
+    const supabase = supabaseBrowserClient;
+    const channelRef = useRef<any>(null);
 
     // Keep track of the latest callbacks to avoid stale closures
     const onInsertRef = useRef(onInsert);
@@ -33,8 +41,16 @@ export function useRealtime({
     }, [onInsert, onUpdate, onDelete]);
 
     useEffect(() => {
-        const channelName = `realtime-${table}-${filter ?? "all"}`;
+        if (!enabled) {
+            if (channelRef.current) {
+                supabase.removeChannel(channelRef.current);
+                channelRef.current = null;
+            }
+            return;
+        }
 
+        const channelName = `realtime-${table}-${filter ?? "all"}`;
+        // ... (rest of the setup)
         let realtimeConfig: any = {
             event: "*",
             schema: "public",
@@ -47,7 +63,7 @@ export function useRealtime({
 
         channelRef.current = supabase
             .channel(channelName)
-            .on("postgres_changes", realtimeConfig, (payload) => {
+            .on("postgres_changes", realtimeConfig, (payload: any) => {
                 console.log(`[REALTIME DEBUG] Table: ${table} | Event: ${payload.eventType}`, payload);
                 if (payload.eventType === "INSERT" && onInsertRef.current) {
                     onInsertRef.current(payload.new);
@@ -59,14 +75,15 @@ export function useRealtime({
                     onDeleteRef.current(payload.old);
                 }
             })
-            .subscribe((status) => {
+            .subscribe((status: any) => {
                 console.log(`[REALTIME DEBUG] Subscribe status for ${channelName}: ${status}`);
             });
 
         return () => {
             if (channelRef.current) {
                 supabase.removeChannel(channelRef.current);
+                channelRef.current = null;
             }
         };
-    }, [table, filter]);
+    }, [table, filter, enabled]);
 }

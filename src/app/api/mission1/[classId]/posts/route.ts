@@ -35,9 +35,10 @@ export async function GET(
         if (error) throw error;
 
         return NextResponse.json({ data });
-    } catch {
+    } catch (error: any) {
+        console.error("GET /api/mission1/posts error:", error);
         return NextResponse.json(
-            { error: "Gagal mengambil data forum" },
+            { error: error.message || "Gagal mengambil data forum" },
             { status: 500 }
         );
     }
@@ -97,9 +98,10 @@ export async function POST(
         if (error) throw error;
 
         return NextResponse.json({ data }, { status: 201 });
-    } catch {
+    } catch (error: any) {
+        console.error("POST /api/mission1/posts error:", error);
         return NextResponse.json(
-            { error: "Gagal membuat post" },
+            { error: error.message || "Gagal membuat post" },
             { status: 500 }
         );
     }

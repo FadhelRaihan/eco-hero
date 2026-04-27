@@ -65,10 +65,10 @@ export async function POST(request: NextRequest) {
         });
         // Inisialisasi mission_progress untuk kelas baru ini
         await supabase.from("mission_progress").insert([
-          { student_id: studentId, class_id, mission_number: 1, status: "in_progress", mission1_step: 1 },
-          { student_id: studentId, class_id, mission_number: 2, status: "locked" },
-          { student_id: studentId, class_id, mission_number: 3, status: "locked" },
-          { student_id: studentId, class_id, mission_number: 4, status: "locked" },
+          { student_id: studentId, class_id, mission_number: 1, status: "locked", pretest_status: "in_progress", posttest_status: "locked", mission1_step: 1 },
+          { student_id: studentId, class_id, mission_number: 2, status: "locked", pretest_status: "locked", posttest_status: "locked" },
+          { student_id: studentId, class_id, mission_number: 3, status: "locked", pretest_status: "locked", posttest_status: "locked" },
+          { student_id: studentId, class_id, mission_number: 4, status: "locked", pretest_status: "locked", posttest_status: "locked" },
         ]);
       }
     } else {
@@ -95,12 +95,12 @@ export async function POST(request: NextRequest) {
       });
 
       // Inisialisasi mission_progress untuk semua 4 misi
-      // Misi 1 langsung in_progress, misi 2-4 locked
+      // Misi 1 locked sampai Pre-test selesai
       await supabase.from("mission_progress").insert([
-        { student_id: studentId, class_id, mission_number: 1, status: "in_progress", mission1_step: 1 },
-        { student_id: studentId, class_id, mission_number: 2, status: "locked" },
-        { student_id: studentId, class_id, mission_number: 3, status: "locked" },
-        { student_id: studentId, class_id, mission_number: 4, status: "locked" },
+        { student_id: studentId, class_id, mission_number: 1, status: "locked", pretest_status: "in_progress", posttest_status: "locked", mission1_step: 1 },
+        { student_id: studentId, class_id, mission_number: 2, status: "locked", pretest_status: "locked", posttest_status: "locked" },
+        { student_id: studentId, class_id, mission_number: 3, status: "locked", pretest_status: "locked", posttest_status: "locked" },
+        { student_id: studentId, class_id, mission_number: 4, status: "locked", pretest_status: "locked", posttest_status: "locked" },
       ]);
     }
 

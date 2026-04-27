@@ -3,8 +3,8 @@ export type TeamRole = "ketua" | "anggota" | "belum_pilih";
 export type MissionStatus = "locked" | "in_progress" | "completed";
 export type TeamMissionStatus = "in_progress" | "completed";
 export type TaskStatus = "belum" | "sedang" | "selesai";
-export type SelectedCase = "plastik_kantin" | "alih_fungsi_lahan" | "pencemaran_air";
-export type ActionType = "poster" | "surat_usulan" | "filter_air" | "lainnya";
+export type SelectedCase = "sampah" | "kendaraan";
+export type ActionType = string;
 export type MediaType = "foto" | "video" | "pdf";
 
 export interface User {
@@ -56,9 +56,40 @@ export interface MissionProgress {
   mission1_step: number;
   mission1_video_watched: boolean;
   mission1_question_answer: string | null;
+  mission1_case: string | null;
+  mission2_step: number;
+  pretest_status: MissionStatus;
+  posttest_status: MissionStatus;
   badge_earned: boolean;
   completed_at?: string;
   updated_at: string;
+}
+
+export interface Test {
+  id: string;
+  class_id: string;
+  type: "pretest" | "posttest";
+  title: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface TestQuestion {
+  id: string;
+  test_id: string;
+  question_text: string;
+  options: string[]; // ["Option A", "Option B", ...]
+  correct_answer: number; // Index of correct option
+  order_index: number;
+}
+
+export interface TestSubmission {
+  id: string;
+  test_id: string;
+  student_id: string;
+  answers: Record<string, number>; // { question_id: selected_index }
+  score: number;
+  submitted_at: string;
 }
 
 export interface TeamMissionProgress {
@@ -95,8 +126,7 @@ export interface Mission2Submission {
   social_problem: string;
   solution: string;
   solution_reason: string;
-  action_type: ActionType;
-  action_custom?: string;
+  action_type: string;
   action_name: string;
   materials: string;
   target_audience: string;

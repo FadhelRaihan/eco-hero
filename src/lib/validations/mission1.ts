@@ -2,16 +2,16 @@ import { z } from "zod";
 
 export const forumPostSchema = z.object({
     case_topic: z.enum(
-        ["plastik_kantin", "alih_fungsi_lahan", "pencemaran_air"],
+        ["sampah", "kendaraan"],
         { message: "Pilih topik kasus terlebih dahulu" }
     ),
     perspective_env: z
         .string()
-        .min(20, "Sudut pandang lingkungan minimal 20 karakter")
+        .min(10, "Sudut pandang lingkungan minimal 10 karakter")
         .max(1000, "Terlalu panjang"),
     perspective_soc: z
         .string()
-        .min(20, "Sudut pandang sosial minimal 20 karakter")
+        .min(10, "Sudut pandang sosial minimal 10 karakter")
         .max(1000, "Terlalu panjang"),
 });
 

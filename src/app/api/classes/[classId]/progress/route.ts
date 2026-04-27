@@ -42,6 +42,7 @@ export async function GET(
                 student_id: member.student_id,
                 full_name: member.users?.full_name,
                 team_role: member.team_role,
+                team_id: team?.id,
                 team_name: team?.name ?? "-",
                 missions: (progressData ?? [])
                     .filter((p) => p.student_id === member.student_id)

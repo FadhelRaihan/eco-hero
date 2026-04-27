@@ -22,27 +22,30 @@ export default function Misi2Page() {
         "belum_pilih"
     );
 
-    // Realtime: update tim ketika ada perubahan
+    // Realtime: update tim ketika ada perubahan (Hanya perlu saat tahap pembentukan tim)
     useRealtime({
         table: "teams",
         filter: `class_id=eq.${user?.class_id}`,
         onInsert: () => { mission.fetchTeams(); mission.fetchStudents(); },
         onUpdate: () => { mission.fetchTeams(); mission.fetchStudents(); },
+        enabled: mission.currentStep <= 2
     });
 
     useRealtime({
         table: "team_members",
         onInsert: () => { mission.fetchTeams(); mission.fetchStudents(); },
         onDelete: () => { mission.fetchTeams(); mission.fetchStudents(); },
+        enabled: mission.currentStep <= 2
     });
 
     useRealtime({
         table: "mission_progress",
         filter: `student_id=eq.${user?.id}`,
         onUpdate: () => { mission.syncProgress(); },
+        enabled: !!user?.id
     });
 
-    // Realtime untuk brainstorming — anggota bisa lihat update ketua
+    // Realtime untuk brainstorming — anggota bisa lihat update ketua (Hanya di Step 3)
     useRealtime({
         table: "mission2_submissions",
         filter: mission.myTeam ? `team_id=eq.${mission.myTeam.id}` : undefined,
@@ -56,6 +59,7 @@ export default function Misi2Page() {
                 mission.fetchBrainstorming();
             }
         },
+        enabled: mission.currentStep === 3 && !!mission.myTeam
     });
 
     const showLoading = authLoading || (!!user && !mission.initialized);

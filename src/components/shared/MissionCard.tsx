@@ -1,10 +1,35 @@
 import Link from "next/link";
-import { Search, Cog, Clock, Leaf, Lock, CheckCircle, PlayCircle } from "lucide-react";
+import { Search, Cog, Clock, Leaf, Lock, CheckCircle, PlayCircle, ClipboardCheck, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { MissionProgress } from "@/types/database";
+
+export type MissionProgress = {
+    id: "pretest" | "misi1" | "misi2" | "misi3" | "misi4" | "posttest";
+    status: "locked" | "in_progress" | "completed";
+    progress?: number | null;
+    completed_at?: string | null;
+    started_at?: string | null;
+};
 
 const MISSION_CONFIG = [
     {
+        id: "pretest",
+        number: 0,
+        title: "Pre-Test",
+        subtitle: "Evaluasi awal sebelum mulai",
+        icon: ClipboardCheck,
+        color: {
+            bg: "bg-[#FFF9C4]",
+            border: "border-[#FBC02D]/30",
+            icon: "bg-white/60 text-[#FBC02D]",
+            title: "text-[#F57F17]",
+            sub: "text-[#F57F17]/70",
+            badge: "bg-white/70 text-[#F57F17]",
+            locked: "opacity-50",
+        },
+        href: "/test/pretest",
+    },
+    {
+        id: "misi1",
         number: 1,
         title: "Sang Penyelidik",
         subtitle: "Investigasi isu lingkungan",
@@ -21,6 +46,7 @@ const MISSION_CONFIG = [
         href: "/misi/1",
     },
     {
+        id: "misi2",
         number: 2,
         title: "Arsitek Solusi",
         subtitle: "Bentuk tim & rancang solusi",
@@ -37,6 +63,7 @@ const MISSION_CONFIG = [
         href: "/misi/2",
     },
     {
+        id: "misi3",
         number: 3,
         title: "Sang Pengatur Waktu",
         subtitle: "Susun jadwal proyek tim",
@@ -53,6 +80,7 @@ const MISSION_CONFIG = [
         href: "/misi/3",
     },
     {
+        id: "misi4",
         number: 4,
         title: "Aksi Nyata",
         subtitle: "Laksanakan proyek & refleksi",
@@ -68,11 +96,28 @@ const MISSION_CONFIG = [
         },
         href: "/misi/4",
     },
+    {
+        id: "posttest",
+        number: 5,
+        title: "Post-Test",
+        subtitle: "Evaluasi akhir perjalanan",
+        icon: GraduationCap,
+        color: {
+            bg: "bg-[#C5CAE9]",
+            border: "border-[#3F51B5]/30",
+            icon: "bg-white/60 text-[#3F51B5]",
+            title: "text-[#1A237E]",
+            sub: "text-[#1A237E]/70",
+            badge: "bg-white/70 text-[#1A237E]",
+            locked: "opacity-50",
+        },
+        href: "/test/posttest",
+    },
 ];
 
-interface MissionCardProps {
-    progress?: MissionProgress;
-    missionNumber: number;
+export interface MissionCardProps {
+    progress?: any;
+    missionNumber: number | string;
     variant?: "compact" | "full";
 }
 
@@ -81,9 +126,16 @@ export default function MissionCard({
     missionNumber,
     variant = "full",
 }: MissionCardProps) {
-    const config = MISSION_CONFIG[missionNumber - 1];
+    const config = typeof missionNumber === "number" 
+        ? MISSION_CONFIG.find(m => m.number === missionNumber)
+        : MISSION_CONFIG.find(m => m.id === missionNumber);
+
+    if (!config) return null;
+
     const Icon = config.icon;
-    const status = progress?.status ?? "locked";
+    const status = progress?.status || (typeof missionNumber === 'string' ? (progress?.status || 'locked') : 'locked');
+    
+    // Khusus untuk pretest/posttest jika status belum ada di DB
     const isLocked = status === "locked";
     const isDone = status === "completed";
 
@@ -115,7 +167,7 @@ export default function MissionCard({
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                     <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide opacity-60">
-                        Misi {missionNumber}
+                        {config.number === 0 || config.number === 5 ? "Tahap Evaluasi" : `Misi ${config.number}`}
                     </p>
                     <p className={cn(
                         "font-bold truncate",

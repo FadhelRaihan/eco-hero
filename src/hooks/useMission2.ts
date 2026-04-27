@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-type CaseTopic = "plastik_kantin" | "alih_fungsi_lahan" | "pencemaran_air";
+import { CaseTopic } from "@/lib/mission-data";
 type TeamRole = "ketua" | "anggota" | "belum_pilih";
 type Mission2Step = 1 | 2 | 3;
 
@@ -31,8 +31,7 @@ export interface BrainstormingData {
     social_problem: string;
     solution: string;
     solution_reason: string;
-    action_type: "poster" | "surat_usulan" | "filter_air" | "lainnya";
-    action_custom?: string;
+    action_type: string;
     action_name: string;
     materials: string;
     target_audience: string;

@@ -5,18 +5,16 @@ import { SendHorizonal, Crown, MessageCircleQuestion, Loader2, Check } from "luc
 import { useRealtime } from "@/hooks/useRealtime";
 import { cn } from "@/lib/utils";
 
-type CaseTopic = "plastik_kantin" | "alih_fungsi_lahan" | "pencemaran_air";
+import { CaseTopic } from "@/lib/mission-data";
 
 const TOPIC_LABEL: Record<CaseTopic, string> = {
-    plastik_kantin: "Kantin",
-    alih_fungsi_lahan: "Lahan",
-    pencemaran_air: "Sungai",
+    sampah: "Sampah",
+    kendaraan: "Kendaraan",
 };
 
 const TOPIC_COLOR: Record<CaseTopic, string> = {
-    plastik_kantin: "bg-[#F9FFA4] text-[#7A7200]",
-    alih_fungsi_lahan: "bg-[#B4FF9F] text-[#1A5C0A]",
-    pencemaran_air: "bg-blue-100 text-blue-700",
+    sampah: "bg-[#F9FFA4] text-[#7A7200]",
+    kendaraan: "bg-[#B4FF9F] text-[#1A5C0A]",
 };
 
 function timeAgo(dateStr: string) {
@@ -104,17 +102,19 @@ export default function Step4Forum({
 
     async function handleSend() {
         if (!input.trim() || hasPosted) return;
-        if (input.trim().length < 20) {
-            setError("Pendapat minimal 20 karakter");
+        if (input.trim().length < 10) {
+            setError("Pendapat minimal 10 karakter");
             return;
         }
 
         setError("");
         const midpoint = Math.ceil(input.length / 2);
+        const part1 = input.slice(0, midpoint).trim();
+        const part2 = input.slice(midpoint).trim();
         const result = await onSubmitPost({
             case_topic: selectedTopic,
-            perspective_env: input.slice(0, midpoint).trim() || input,
-            perspective_soc: input.slice(midpoint).trim() || input,
+            perspective_env: part1.length >= 10 ? part1 : input,
+            perspective_soc: part2.length >= 10 ? part2 : input,
         });
 
         if (!result.success) {
@@ -138,13 +138,13 @@ export default function Step4Forum({
     const uniqueStudents = new Set(posts.map((p) => p.student_id)).size;
 
     return (
-        <div className="flex-1 flex flex-col min-h-0 py-6">
+        <div className="flex-1 flex flex-col min-h-0 py-4 overflow-hidden">
             {/* Section header */}
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-3 shrink-0">
                 <div className="w-8 h-8 rounded-full bg-[#B4FF9F] flex items-center justify-center">
                     <span className="text-[#1A5C0A] font-bold text-lg">4</span>
                 </div>
-                <h2 className="text-md font-bold text-[#333333] uppercase tracking-wide">
+                <h2 className="text-sm font-bold text-[#333333] uppercase tracking-wide">
                     Forum Dilema Kelas
                 </h2>
             </div>
@@ -175,7 +175,7 @@ export default function Step4Forum({
                 {/* Posts list */}
                 <div
                     ref={listRef}
-                    className="flex-1 overflow-y-auto px-3 sm:px-5 py-4 min-h-[180px] max-h-[400px]"
+                    className="flex-1 overflow-y-auto px-3 sm:px-5 py-4 min-h-0"
                 >
                     {loadingPosts ? (
                         <div className="flex justify-center py-8">
@@ -283,12 +283,12 @@ export default function Step4Forum({
                 </div>
             </div>
 
-            <div className="pt-4 pb-6 mt-2">
+            <div className="pt-3 pb-2 shrink-0">
                 <button
                     onClick={handleComplete}
                     disabled={!hasPosted || completing}
                     className={cn(
-                        "w-full py-3 sm:py-2 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer",
+                        "w-full py-2.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer",
                         hasPosted
                             ? "bg-[#B4FF9F] text-[#1A5C0A] border-2 border-[#1A5C0A]/60 hover:bg-[#9AEF85]"
                             : "bg-gray-100 text-gray-400 cursor-not-allowed"
@@ -299,9 +299,9 @@ export default function Step4Forum({
                     ) : (
                         <>
                             Selesaikan Misi & Dapatkan Lencana
-                            <Crown size={24} className="text-[#FF9100]" />
+                            <Crown size={20} className="text-[#FF9100]" />
                         </>
-                        )}
+                    )}
                 </button>
             </div>
         </div>

@@ -70,20 +70,20 @@ export default function DashboardGuruPage() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto px-5 py-6">
+        <div className="mx-auto px-8 py-6 space-y-8 animate-in fade-in duration-500">
             {/* Header */}
             <div className="flex items-start justify-between mb-6">
                 <div>
-                    <h1 className="text-xl font-extrabold text-gray-800">
-                        Halo, {user?.full_name} 👋
+                    <h1 className="text-xl font-extrabold text-[#333333]">
+                        Halo, {user?.full_name}
                     </h1>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <p className="text-sm text-[#333333]/60 mt-0.5">
                         Pantau perkembangan siswa Eco Hero
                     </p>
                 </div>
                 <button
                     onClick={() => setShowForm(true)}
-                    className="flex items-center gap-2 bg-eco-green text-eco-green-text text-sm font-bold px-4 py-2 rounded-xl hover:bg-eco-green-dark hover:text-white transition-all active:scale-95"
+                    className="flex items-center gap-2 bg-[#1A5C0A] text-white text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-[#1A5C0A]/90 transition-all active:scale-95 shadow-sm cursor-pointer"
                 >
                     <Plus size={16} />
                     Buat Kelas
@@ -108,13 +108,13 @@ export default function DashboardGuruPage() {
                         <button
                             onClick={handleCreateKelas}
                             disabled={creating}
-                            className="px-4 h-10 bg-eco-green-dark text-white text-sm font-bold rounded-xl hover:bg-eco-green-text transition-all disabled:opacity-50"
+                            className="px-4 h-10 bg-[#1A5C0A] text-white text-sm font-bold rounded-xl hover:bg-[#1A5C0A]/90 transition-all disabled:opacity-50 cursor-pointer"
                         >
                             {creating ? "Menyimpan..." : "Simpan"}
                         </button>
                         <button
                             onClick={() => { setShowForm(false); setError(""); }}
-                            className="px-4 h-10 bg-gray-100 text-gray-600 text-sm font-bold rounded-xl hover:bg-gray-200 transition-all"
+                            className="px-4 h-10 bg-[#333333]/5 text-[#333333]/60 text-sm font-bold rounded-xl hover:bg-[#333333]/10 transition-all cursor-pointer"
                         >
                             Batal
                         </button>
@@ -126,28 +126,28 @@ export default function DashboardGuruPage() {
             {/* Stats Overview */}
             <div className="grid grid-cols-3 gap-3 mb-6">
                 {[
-                    { icon: School, label: "Total Kelas", value: kelasList.length, color: "bg-eco-green text-eco-green-text" },
-                    { icon: Users, label: "Total Siswa", value: "-", color: "bg-eco-yellow text-eco-yellow-text" },
-                    { icon: CheckCircle, label: "Tim Terbentuk", value: "-", color: "bg-eco-orange text-eco-orange-text" },
+                    { icon: School, label: "Total Kelas", value: kelasList.length, color: "bg-[#B4FF9F] text-[#1A5C0A]" },
+                    { icon: Users, label: "Total Siswa", value: "-", color: "bg-[#F9FFA4] text-[#7A7200]" },
+                    { icon: CheckCircle, label: "Tim Terbentuk", value: "-", color: "bg-[#FFD59E] text-[#6b3a00]" },
                 ].map((stat) => (
-                    <div key={stat.label} className="bg-white rounded-2xl border border-gray-100 p-4">
+                    <div key={stat.label} className="bg-white rounded-2xl border border-[#1A5C0A]/10 p-4 shadow-sm">
                         <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center mb-2", stat.color)}>
                             <stat.icon size={18} />
                         </div>
-                        <p className="text-2xl font-extrabold text-gray-800">{stat.value}</p>
-                        <p className="text-xs text-gray-400 font-medium">{stat.label}</p>
+                        <p className="text-2xl font-extrabold text-[#333333]">{stat.value}</p>
+                        <p className="text-xs text-[#333333]/40 font-medium">{stat.label}</p>
                     </div>
                 ))}
             </div>
 
             {/* Kelas List */}
-            <h2 className="text-sm font-extrabold text-gray-700 mb-3 uppercase tracking-wide">
+            <h2 className="text-[11px] font-extrabold text-[#333333]/50 mb-3 uppercase tracking-widest">
                 Daftar Kelas
             </h2>
 
             {loading ? (
                 <div className="flex justify-center py-12">
-                    <div className="animate-spin w-8 h-8 border-4 border-eco-green border-t-transparent rounded-full" />
+                    <div className="animate-spin w-8 h-8 border-4 border-[#1A5C0A] border-t-transparent rounded-full" />
                 </div>
             ) : kelasList.length === 0 ? (
                 <div className="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-10 text-center">
@@ -164,33 +164,30 @@ export default function DashboardGuruPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {kelasList.map((kelas) => (
-                        <Link key={kelas.id} href={`/guru/kelas/${kelas.id}`}>
-                            <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-eco-green hover:shadow-sm transition-all cursor-pointer">
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="w-11 h-11 rounded-2xl bg-eco-green flex items-center justify-center">
-                                        <School size={22} className="text-eco-green-text" />
-                                    </div>
-                                    <span className="text-xs bg-eco-green text-eco-green-text font-bold px-3 py-1 rounded-full">
-                                        Aktif
-                                    </span>
+                        <div key={kelas.id} className="bg-white rounded-2xl border border-[#1A5C0A]/10 p-5 transition-all shadow-sm group">
+                            <div className="flex items-start justify-between mb-4">
+                                <div className="w-11 h-11 rounded-2xl bg-[#B4FF9F] flex items-center justify-center">
+                                    <School size={22} className="text-[#1A5C0A]" />
                                 </div>
-                                <h3 className="font-extrabold text-gray-800 text-base mb-1">
-                                    {kelas.name}
-                                </h3>
-                                <p className="text-xs text-gray-400">Ketuk untuk lihat detail kelas</p>
-
-                                {/* Mini progress indicator */}
-                                <div className="flex gap-1.5 mt-4">
-                                    {[1, 2, 3, 4].map((n) => (
-                                        <div
-                                            key={n}
-                                            className="flex-1 h-1.5 rounded-full bg-gray-100"
-                                        />
-                                    ))}
-                                </div>
-                                <p className="text-[9px] text-gray-400 mt-1">Progress misi siswa</p>
+                                <span className="text-[10px] bg-[#B4FF9F] text-[#1A5C0A] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                                    Aktif
+                                </span>
                             </div>
-                        </Link>
+                            <h3 className="font-extrabold text-[#333333] text-base mb-1">
+                                {kelas.name}
+                            </h3>
+                            <p className="text-[11px] text-[#333333]/40 font-medium">Data kelas ini dikelola di Manajemen Siswa</p>
+                            
+                            <div className="flex gap-1.5 mt-4">
+                                {[1, 2, 3, 4].map((n) => (
+                                    <div
+                                        key={n}
+                                        className="flex-1 h-1.5 rounded-full bg-[#1A5C0A]/5"
+                                    />
+                                ))}
+                            </div>
+                            <p className="text-[9px] text-[#333333]/30 font-bold mt-1.5 uppercase tracking-tighter">Progress misi siswa</p>
+                        </div>
                     ))}
                 </div>
             )}

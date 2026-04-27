@@ -30,31 +30,31 @@ export default function Misi1Page() {
     const showLoading = authLoading || (!!user && !mission.initialized);
 
     return (
-        <div className="flex flex-col">
+        <div className="flex flex-col h-screen overflow-hidden bg-white">
             {/* Hero Header */}
-            <div className="px-4 md:px-8 lg:px-26 pt-20 lg:pt-24 pb-6 bg-[#B4FF9F]">
-                <p className="text-[10px] font-bold text-[#2D7A1A] uppercase tracking-widest mb-3">
+            <div className="px-4 md:px-8 lg:px-26 pt-16 lg:pt-20 pb-3 bg-[#B4FF9F]">
+                <p className="text-[10px] font-bold text-[#2D7A1A] uppercase tracking-widest mb-1">
                     Misi 1 · Nalar Kritis
                 </p>
-                <h1 className="text-xl lg:text-2xl font-extrabold text-[#1A5C0A] flex items-center gap-2 mb-3">
+                <h1 className="text-lg lg:text-xl font-extrabold text-[#1A5C0A] flex items-center gap-2 mb-1">
                     <Search className="w-5 h-5 lg:w-[22px] lg:h-[22px] text-[#1A5C0A]" strokeWidth={3} /> Sang Penyelidik
                 </h1>
-                <p className="text-xs lg:text-sm text-[#2D7A1A] leading-relaxed mb-5 max-w-lg">
+                <p className="text-[10px] lg:text-xs text-[#2D7A1A] leading-relaxed mb-3 max-w-lg">
                     Selidiki isu lingkungan di sekitarmu! Pilih lokasi, tonton video, jawab
                     pertanyaan, lalu bagikan pendapatmu di forum diskusi.
                 </p>
                 <div className="flex gap-2 flex-wrap">
-                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#1A5C0A] text-xs font-semibold px-3 py-1.5 rounded-full border border-[#1A5C0A]/20">
-                        <Brain size={16} strokeWidth={3} className="text-[#FFA1A1]" /> Nalar Kritis
+                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#1A5C0A] text-[10px] font-semibold px-2 py-1 rounded-full border border-[#1A5C0A]/20">
+                        <Brain size={12} strokeWidth={3} className="text-[#FFA1A1]" /> Nalar Kritis
                     </span>
-                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#1A5C0A] text-xs font-semibold px-3 py-1.5 rounded-full border border-[#1A5C0A]/20">
-                        <LinkIcon size={16} strokeWidth={3} className="text-[#333333]" /> Berpikir Sistem
+                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#1A5C0A] text-[10px] font-semibold px-2 py-1 rounded-full border border-[#1A5C0A]/20">
+                        <LinkIcon size={12} strokeWidth={3} className="text-[#333333]" /> Berpikir Sistem
                     </span>
                 </div>
             </div>
 
             {/* Step Content */}
-            <div className="flex-1 flex flex-col px-4 md:px-8 lg:px-26 pb-8">
+            <div className="flex-1 flex flex-col px-4 md:px-8 lg:px-26 pb-4 min-h-0 overflow-hidden">
                 {showLoading ? (
                     <div className="flex-1 flex flex-col items-center justify-center gap-3 py-16">
                         <Loader2 className="animate-spin w-8 h-8 text-[#1A5C0A]" />

@@ -2,23 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { Mission1ForumPost } from "@/types/database";
+import { CaseTopic } from "@/lib/mission-data";
 
 type Step = 1 | 2 | 3 | 4;
-type CaseTopic = "plastik_kantin" | "alih_fungsi_lahan" | "pencemaran_air";
 
 interface PostWithMeta extends Mission1ForumPost {
     users: { id: string; full_name: string };
     mission1_forum_comments: { count: number }[];
-}
-
-function saveLocation(studentId: string, location: CaseTopic) {
-    if (typeof window === "undefined" || !studentId) return;
-    localStorage.setItem(`mission1_location_${studentId}`, location);
-}
-
-function loadLocation(studentId: string): CaseTopic | null {
-    if (typeof window === "undefined" || !studentId) return null;
-    return localStorage.getItem(`mission1_location_${studentId}`) as CaseTopic | null;
 }
 
 export function useMission1(studentId: string, classId: string) {
@@ -47,10 +37,18 @@ export function useMission1(studentId: string, classId: string) {
                     const step = (data.mission1_step ?? 1) as Step;
                     setCurrentStep(step);
 
+                    // Sinkronisasi Kasus dari Database
+                    if (data.mission1_case) {
+                        const legacyMap: Record<string, CaseTopic> = {
+                            tumpukan_sampah: "sampah",
+                            kendaraan_listrik: "kendaraan"
+                        };
+                        const normalizedCase = legacyMap[data.mission1_case] || (data.mission1_case as CaseTopic);
+                        setSelectedLocation(normalizedCase);
+                    }
+
                     if (step >= 2) {
                         setVideoWatched(data.mission1_video_watched ?? false);
-                        const saved = loadLocation(studentId);
-                        if (saved) setSelectedLocation(saved);
                     }
 
                     if (step >= 3) {
@@ -62,7 +60,7 @@ export function useMission1(studentId: string, classId: string) {
 
                     if (step === 4) {
                         const postsRes = await fetch(`/api/mission1/${classId}/posts`);
-                        const postsResult = await postsRes.json();
+                        const postsResult = await postsRes.ok ? await postsRes.json() : { data: [] };
                         if (postsRes.ok) {
                             const fetchedPosts: PostWithMeta[] = postsResult.data ?? [];
                             setPosts(fetchedPosts);
@@ -109,9 +107,14 @@ export function useMission1(studentId: string, classId: string) {
         });
     }
 
-    function handleLocationSelect(location: CaseTopic) {
+    async function handleLocationSelect(location: CaseTopic) {
         setSelectedLocation(location);
-        saveLocation(studentId, location);
+        // Simpan pilihan kasus ke database
+        await fetch(`/api/progress/${studentId}/mission/1`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mission1_case: location }),
+        });
     }
 
     async function goToNextStep() {

@@ -27,5 +27,17 @@ export function useMissionProgress(studentId: string | undefined) {
     const completedCount = missions.filter((m) => m.status === "completed").length;
     const currentMission = missions.find((m) => m.status === "in_progress");
 
-    return { missions, loading, badgeCount, completedCount, currentMission };
+    // Pre-test harus terbuka (in_progress) secara default untuk siswa baru
+    const pretestStatus = (missions.find(m => m.mission_number === 1) as any)?.pretest_status || 'in_progress';
+    const posttestStatus = (missions.find(m => m.mission_number === 4) as any)?.posttest_status || 'locked';
+
+    return { 
+        missions, 
+        loading, 
+        badgeCount, 
+        completedCount, 
+        currentMission,
+        pretestStatus,
+        posttestStatus
+    };
 }

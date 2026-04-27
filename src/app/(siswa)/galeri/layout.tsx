@@ -7,7 +7,13 @@ export default function GaleriLayout({
 }) {
     return (
         <>
-            <Navbar role="siswa" />
+            <Navbar 
+                role="siswa" 
+                backUrl="/dashboard" 
+                title="Galeri Karya Pahlawan" 
+                bgBtn="bg-[#B4FF9F]" 
+                textColor="text-[#1A5C0A]" 
+            />
             {children}
         </>
     );

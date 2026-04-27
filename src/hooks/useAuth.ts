@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 interface AuthUser {
   id: string;
   full_name: string;
+  email?: string;
   role: "guru" | "siswa";
   class_id?: string;
   class_name?: string;
+  user_metadata?: any;
 }
 
 export function useAuth() {

@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
         const isValid = await bcrypt.compare(password, guru.password_hash!);
         if (!isValid) {
             return NextResponse.json(
-                { error: "Username atau password salah" },
+                { error: "password salah" },
                 { status: 401 }
             );
         }

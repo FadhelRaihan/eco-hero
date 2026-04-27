@@ -17,9 +17,8 @@ interface Step2BuatTimProps {
 }
 
 const CASE_LABEL: Record<string, string> = {
-    plastik_kantin: "Isu Plastik Kantin Sekolah",
-    alih_fungsi_lahan: "Isu Alih Fungsi Lahan",
-    pencemaran_air: "Isu Pencemaran Air",
+    tumpukan_sampah: "Isu Tumpukan Sampah",
+    kendaraan_listrik: "Isu Kendaraan Listrik",
 };
 
 export default function Step2BuatTim({

@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMissionProgress } from "@/hooks/useMission";
 import MissionCard from "@/components/shared/MissionCard";
+import TeamStatusDialog from "@/components/siswa/TeamStatusDialog";
 import { Leaf, Award, Users, BookOpen, Loader2, Image as ImageIcon, Crown, Search, Cog, Clock, ShieldCheck, Lock } from "lucide-react";
 import Link from "next/link";
 
@@ -11,8 +13,9 @@ const BADGE_NAMES = ["Sang Penyelidik", "Arsitek Solusi", "Pengatur Waktu", "Pah
 
 export default function DashboardSiswaPage() {
     const { user } = useAuth();
-    const { missions, loading, badgeCount, completedCount, currentMission } =
+    const { missions, loading, badgeCount, completedCount, currentMission, pretestStatus, posttestStatus } =
         useMissionProgress(user?.id);
+    const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
 
     if (loading) {
         return (
@@ -25,9 +28,9 @@ export default function DashboardSiswaPage() {
     const progressPercent = (completedCount / 4) * 100;
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 md:pb-12">
             {/* SECTION KIRI */}
-            <div className="lg:col-span-7 space-y-4 lg:space-y-6">
+            <div className="lg:col-span-7 flex flex-col gap-4 lg:gap-6 h-full">
                 {/* Hero Header */}
                 <div className="bg-white border border-[#1A5C0A]/50 px-4 sm:px-6 pt-5 sm:pt-6 pb-6 sm:pb-7 rounded-3xl">
                     <div className="flex items-end gap-3 sm:gap-4">
@@ -94,8 +97,11 @@ export default function DashboardSiswaPage() {
                 </div>
 
                 {/* Navigation Cards & Info Team */}
-                <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 lg:gap-4">
-                    <div className="bg-white rounded-3xl border border-[#1A5C0A]/50 p-4 lg:p-5 flex items-center gap-3">
+                <div className="flex-1 grid grid-cols-2 lg:grid-cols-1 gap-3 lg:gap-4">
+                    <div 
+                        onClick={() => setIsTeamDialogOpen(true)}
+                        className="bg-white rounded-3xl border border-[#1A5C0A]/50 p-4 lg:p-5 flex items-center gap-3 hover:shadow-md transition-all cursor-pointer active:scale-95"
+                    >
                         <div className="w-12 h-12 rounded-2xl bg-[#B4FF9F] flex items-center justify-center text-[#333333] flex-shrink-0">
                             <Users size={24} />
                         </div>
@@ -117,7 +123,7 @@ export default function DashboardSiswaPage() {
                 </div>
 
                 {/* Detailed Lencana Section */}
-                <div id="lencana" className="bg-white rounded-3xl border border-[#1A5C0A]/50 p-4 sm:p-5 lg:p-6">
+                <div id="lencana" className="flex-1 bg-white rounded-3xl border border-[#1A5C0A]/50 p-4 sm:p-5 lg:p-6 flex flex-col justify-center">
                     <div className="flex items-center justify-between mb-5">
                         <h2 className="text-sm font-extrabold text-[#333333] uppercase tracking-wide">
                             Koleksi Lencana
@@ -167,9 +173,17 @@ export default function DashboardSiswaPage() {
                         <h2 className="text-sm font-extrabold text-[#333333] uppercase tracking-wide">
                             Perjalanan Misiku
                         </h2>
-                        <span className="text-xs font-bold text-[#333333]/50">{completedCount}/4 Selesai</span>
+                        <span className="text-xs font-bold text-[#333333]/50">{completedCount}/4 Misi Selesai</span>
                     </div>
                     <div className="space-y-4">
+                        {/* Pre-Test */}
+                        <MissionCard
+                            missionNumber="pretest"
+                            progress={{ status: pretestStatus }}
+                            variant="full"
+                        />
+
+                        {/* Misi 1-4 */}
                         {[1, 2, 3, 4].map((num) => (
                             <MissionCard
                                 key={num}
@@ -178,9 +192,22 @@ export default function DashboardSiswaPage() {
                                 variant="full"
                             />
                         ))}
+
+                        {/* Post-Test */}
+                        <MissionCard
+                            missionNumber="posttest"
+                            progress={{ status: posttestStatus }}
+                            variant="full"
+                        />
                     </div>
                 </div>
             </div>
+
+            <TeamStatusDialog 
+                isOpen={isTeamDialogOpen}
+                onClose={() => setIsTeamDialogOpen(false)}
+                studentId={user?.id}
+            />
         </div>
     );
 }

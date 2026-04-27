@@ -55,6 +55,7 @@ export default function Misi3Page() {
         onUpdate: () => {
             if (mission.myTeam) mission.fetchScheduleAndTasks(mission.myTeam.id);
         },
+        enabled: !!mission.myTeam
     });
 
     const showLoading = authLoading || (!!user && !mission.initialized) || mission.loading;

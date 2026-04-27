@@ -42,17 +42,38 @@ export async function POST(
             .eq("team_id", teamId);
 
         if (members && members.length > 0) {
-            for (const member of members) {
-                await supabase
-                    .from("mission_progress")
-                    .update({ 
-                        status: "completed",
-                        badge_earned: true,
-                        completed_at: now
-                    })
-                    .eq("student_id", member.student_id)
-                    .eq("mission_number", 3);
-            }
+            const memberIds = members.map(m => m.student_id);
+
+            // 1. Update Mission 3 status to completed for all members
+            await supabase
+                .from("mission_progress")
+                .update({ 
+                    status: "completed",
+                    badge_earned: true,
+                    completed_at: now
+                })
+                .in("student_id", memberIds)
+                .eq("mission_number", 3);
+
+            // 2. Unlock Mission 4 (set to in_progress) for all members
+            await supabase
+                .from("mission_progress")
+                .update({ 
+                    status: "in_progress" 
+                })
+                .in("student_id", memberIds)
+                .eq("mission_number", 4)
+                .eq("status", "locked");
+
+            // 3. Update team-wide mission progress
+            await supabase
+                .from("team_mission_progress")
+                .upsert({
+                    team_id: teamId,
+                    mission_number: 3,
+                    status: "completed",
+                    completed_at: now
+                }, { onConflict: "team_id,mission_number" });
         }
 
         return NextResponse.json({ data });

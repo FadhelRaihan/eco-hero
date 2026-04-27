@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   description: "Platform belajar lingkungan untuk Pahlawan Eco Hero",
 };
 
+import { Toaster } from "sonner";
+
 export default function RootLayout({
   children,
 }: {
@@ -22,6 +24,7 @@ export default function RootLayout({
     <html lang="id">
       <body className={`${geist.variable} font-sans antialiased`}>
         {children}
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );
