@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Leaf, Sparkles, LogIn, Loader2, Play } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { IconChevronDown } from "@tabler/icons-react";
 import { siswaLoginSchema, type SiswaLoginInput } from "@/lib/validations/auth";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ interface Kelas {
 
 export default function LoginSiswaPage() {
     const router = useRouter();
+    const { loginUser } = useAuth();
     const [kelasList, setKelasList] = useState<Kelas[]>([]);
     const [loadingKelas, setLoadingKelas] = useState(true);
     const [serverError, setServerError] = useState("");
@@ -84,8 +86,10 @@ export default function LoginSiswaPage() {
                 return;
             }
 
+            // Update AuthContext langsung tanpa perlu reload
+            // sehingga useMissionProgress bisa langsung fetch dengan user.id
+            loginUser(result.data.user);
             router.push("/dashboard");
-            router.refresh();
         } catch {
             setServerError("Tidak dapat terhubung ke server");
         } finally {

@@ -22,7 +22,6 @@ export function useMissionProgress(studentId: string | undefined) {
             return;
         }
 
-
         async function fetchProgress() {
             try {
                 const res = await fetch(`/api/progress/${studentId}`);

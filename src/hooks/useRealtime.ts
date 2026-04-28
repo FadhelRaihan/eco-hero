@@ -64,7 +64,6 @@ export function useRealtime({
         channelRef.current = supabase
             .channel(channelName)
             .on("postgres_changes", realtimeConfig, (payload: any) => {
-                console.log(`[REALTIME DEBUG] Table: ${table} | Event: ${payload.eventType}`, payload);
                 if (payload.eventType === "INSERT" && onInsertRef.current) {
                     onInsertRef.current(payload.new);
                 }
@@ -75,9 +74,7 @@ export function useRealtime({
                     onDeleteRef.current(payload.old);
                 }
             })
-            .subscribe((status: any) => {
-                console.log(`[REALTIME DEBUG] Subscribe status for ${channelName}: ${status}`);
-            });
+            .subscribe();
 
         return () => {
             if (channelRef.current) {

@@ -22,7 +22,7 @@ export default function DashboardSiswaPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <Loader2 className="animate-spin w-8 h-8" />
+                <Loader2 className="animate-spin w-8 h-8 text-[#1A5C0A]" />
             </div>
         );
     }

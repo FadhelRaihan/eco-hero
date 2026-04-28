@@ -27,6 +27,7 @@ interface AuthContextValue {
     loading: boolean;
     isDemoMode: boolean;
     logout: () => Promise<void>;
+    loginUser: (user: AuthUser) => void;
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -35,6 +36,7 @@ const AuthContext = createContext<AuthContextValue>({
     loading: true,
     isDemoMode: false,
     logout: async () => {},
+    loginUser: () => {},
 });
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -45,7 +47,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter();
 
     useEffect(() => {
-        // Cek demo mode
         const demo = localStorage.getItem("eco_demo_mode") === "true";
         setIsDemoMode(demo);
 
@@ -55,7 +56,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        // Mode normal: baca dari cookie session
         const siswaSession = getCookie("siswa_session");
         const guruSession = getCookie("guru_session");
 
@@ -86,19 +86,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         router.refresh();
     }, [router]);
 
+    // Dipanggil dari halaman login setelah API berhasil
+    // agar AuthContext langsung tau user tanpa perlu reload
+    const loginUser = useCallback((newUser: AuthUser) => {
+        setUser(newUser);
+        setLoading(false);
+    }, []);
+
     return (
-        <AuthContext.Provider value={{ user, loading, isDemoMode, logout }}>
+        <AuthContext.Provider value={{ user, loading, isDemoMode, logout, loginUser }}>
             {children}
         </AuthContext.Provider>
     );
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
-/**
- * Gunakan hook ini di semua komponen.
- * State auth hanya dibuat SATU KALI di AuthProvider,
- * bukan per-komponen seperti sebelumnya.
- */
 export function useAuth() {
     return useContext(AuthContext);
 }
