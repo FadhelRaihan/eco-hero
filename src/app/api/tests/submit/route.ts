@@ -12,7 +12,6 @@ export async function POST(request: NextRequest) {
 
         const supabase = createAdminClient();
 
-        // 1. Get class_id for the student
         const { data: member } = await supabase
             .from("class_members")
             .select("class_id")
@@ -21,7 +20,6 @@ export async function POST(request: NextRequest) {
 
         if (!member) throw new Error("Student not in a class");
 
-        // 2. Fetch the active test and its correct answers to calculate score
         const { data: test } = await supabase
             .from("tests")
             .select("id")
@@ -39,7 +37,6 @@ export async function POST(request: NextRequest) {
 
         if (!questions) throw new Error("No questions found for this test");
 
-        // 3. Calculate score
         let correctCount = 0;
         questions.forEach(q => {
             if (answers[q.id] === q.correct_answer) {
@@ -60,16 +57,16 @@ export async function POST(request: NextRequest) {
 
         if (subError) throw subError;
 
-        // 5. Update mission progress status
         const statusField = type === "pretest" ? "pretest_status" : "posttest_status";
-        
+        const missionNumber = type === "pretest" ? 1 : 4;
+
         await supabase
             .from("mission_progress")
             .update({ [statusField]: "completed" })
             .eq("student_id", student_id)
-            .eq("mission_number", 1); // Mission 1 is the anchor for pretest
+            .eq("mission_number", missionNumber);
 
-        // If pretest is completed, mission 1 should become in_progress if it was locked
+        // Jika pretest selesai, buka kunci Misi 1
         if (type === "pretest") {
             await supabase
                 .from("mission_progress")

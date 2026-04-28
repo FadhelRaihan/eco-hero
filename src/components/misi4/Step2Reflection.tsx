@@ -44,8 +44,8 @@ export default function Step2Reflection({ submissions, onComplete, loading, save
                 </h2>
             </div>
 
-            <div className="bg-white border border-gray-100 rounded-[2rem] p-6 md:p-8 shadow-sm space-y-8">
-                <div className="p-4 bg-red-50 rounded-2xl border-l-4 border-[#FFAFAF]">
+            <div className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8 shadow-sm space-y-8">
+                <div className="p-4 bg-red-50 rounded-xl">
                     <h3 className="font-bold text-[#7A2A2A]">Jurnal Refleksi Pribadi</h3>
                     <p className="text-xs text-[#7A2A2A]/70">Diisi oleh setiap anggota tim secara individu</p>
                 </div>
@@ -71,7 +71,7 @@ export default function Step2Reflection({ submissions, onComplete, loading, save
                 )}
 
                 <div className="space-y-6">
-                    <div className="space-y-3">
+                    <div className="flex flex-col gap-2">
                         <label className="text-sm font-bold text-[#333]">
                             "Bagaimana perasaanmu setelah berhasil membuat perubahan kecil ini?"
                         </label>
@@ -79,11 +79,11 @@ export default function Step2Reflection({ submissions, onComplete, loading, save
                             placeholder="Tulis perasaanmu di sini..."
                             value={feeling}
                             onChange={(e) => setFeeling(e.target.value)}
-                            className="min-h-[120px] rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:border-[#FFAFAF] transition-all resize-none"
+                            className="min-h-[120px] rounded-xl bg-gray-50/50 border-gray-100 focus:bg-white focus:border-[#FFAFAF] transition-all resize-none"
                         />
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="flex flex-col gap-2">
                         <label className="text-sm font-bold text-[#333]">
                             "Apa komitmenmu agar kebiasaan baik ini terus berlanjut?"
                         </label>
@@ -91,7 +91,7 @@ export default function Step2Reflection({ submissions, onComplete, loading, save
                             placeholder="Tulis komitmenmu di sini..."
                             value={commitment}
                             onChange={(e) => setCommitment(e.target.value)}
-                            className="min-h-[120px] rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:border-[#FFAFAF] transition-all resize-none"
+                            className="min-h-[120px] rounded-xl bg-gray-50/50 border-gray-100 focus:bg-white focus:border-[#FFAFAF] transition-all resize-none"
                         />
                     </div>
                 </div>
@@ -100,7 +100,7 @@ export default function Step2Reflection({ submissions, onComplete, loading, save
                     <Button 
                         onClick={handleComplete}
                         disabled={!feeling || !commitment || loading}
-                        className="bg-[#FFAFAF] hover:bg-[#FF8A8A] border border-[#7A2A2A]/20 text-[#7A2A2A] font-bold px-8 py-2 rounded-xl flex items-center gap-2 transition cursor-pointer"
+                        className="bg-[#FFAFAF] hover:bg-[#FF8A8A] border border-[#7A2A2A]/20 text-[#7A2A2A] font-bold px-12 py-4 rounded-xl flex items-center gap-2 transition cursor-pointer"
                     >
                         {loading ? <Loader2 className="animate-spin" /> : "Selesaikan Misi 4"} <ChevronRight size={16} />
                     </Button>
@@ -109,7 +109,7 @@ export default function Step2Reflection({ submissions, onComplete, loading, save
 
             {/* Gallery Dialog */}
             <Dialog open={selectedMediaIndex !== null} onOpenChange={(open) => !open && setSelectedMediaIndex(null)}>
-                <DialogContent className="max-w-3xl rounded-3xl p-0 overflow-hidden border-none text-left">
+                <DialogContent className="max-w-3xl rounded-2xl p-0 overflow-hidden border-none text-left">
                     {selectedMediaIndex !== null && submissions[selectedMediaIndex] && (
                         <>
                             <DialogHeader className="p-6 bg-[#FFAFAF] text-white">

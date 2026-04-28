@@ -67,6 +67,22 @@ export default function Step1Upload({ onSave, loading }: Step1UploadProps) {
         
         setIsUploading(true);
         try {
+            // ── DEMO MODE: skip Cloudinary, pakai blob URL lokal ──
+            const isDemoMode = typeof window !== "undefined"
+                ? localStorage.getItem("eco_demo_mode") === "true"
+                : false;
+
+            if (isDemoMode) {
+                const demoFiles = uploadedFiles.map((item) => ({
+                    cloudinary_url: item.previewUrl, // blob URL lokal, hanya tersedia di sesi ini
+                    media_type: item.type,
+                    caption: item.caption,
+                }));
+                await onSave(demoFiles);
+                return;
+            }
+            // ── END DEMO ──────────────────────────────────────────
+
             const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
             const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "ml_default";
 
@@ -80,7 +96,7 @@ export default function Step1Upload({ onSave, loading }: Step1UploadProps) {
                 formData.append("upload_preset", uploadPreset);
                 formData.append("folder", "eco-hero/mission4");
 
-                let resourceType = "auto"; // Use auto for simplicity or stick to previous logic
+                let resourceType = "auto";
                 if (item.type === "video") resourceType = "video";
                 if (item.type === "foto") resourceType = "image";
                 if (item.type === "pdf") resourceType = "image";
@@ -108,6 +124,7 @@ export default function Step1Upload({ onSave, loading }: Step1UploadProps) {
             setIsUploading(false);
         }
     };
+
 
     return (
         <div className="space-y-6">
@@ -171,7 +188,7 @@ export default function Step1Upload({ onSave, loading }: Step1UploadProps) {
                         <Button 
                             onClick={handleSave}
                             disabled={loading || isUploading}
-                            className="bg-[#FFAFAF] hover:bg-[#FF8A8A] border border-[#7A2A2A]/20 text-[#7A2A2A] font-bold px-8 py-2 rounded-xl flex items-center gap-2 transition cursor-pointer"
+                            className="bg-[#FFAFAF] hover:bg-[#FF8A8A] border border-[#7A2A2A]/20 text-[#7A2A2A] font-bold px-12 py-4 rounded-xl flex items-center gap-2 transition cursor-pointer"
                         >
                             {loading || isUploading ? <Loader2 className="animate-spin" /> : "Simpan & Lanjut"} <ChevronRight size={16} />
                         </Button>

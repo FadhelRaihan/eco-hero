@@ -17,7 +17,13 @@ export async function GET(
 
         if (error) throw error;
 
-        return NextResponse.json({ data });
+        return NextResponse.json({ data }, {
+            headers: {
+                // Browser-only cache (private): data spesifik per siswa
+                // 30s cache → maks 30s stale, lalu revalidate di background
+                "Cache-Control": "private, max-age=30, stale-while-revalidate=60",
+            },
+        });
     } catch {
         return NextResponse.json({ error: "Gagal mengambil progress" }, { status: 500 });
     }

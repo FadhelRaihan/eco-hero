@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Loader2, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DEMO_TEST_QUESTIONS } from "@/lib/demo/mockData";
 
 interface Question {
     id: string;
@@ -31,16 +32,26 @@ export default function TestPage() {
     useEffect(() => {
         if (!user) return;
 
+        const isDemoMode = typeof window !== "undefined"
+            ? localStorage.getItem("eco_demo_mode") === "true"
+            : false;
+
+        // ── DEMO MODE ──────────────────────────────────────────
+        if (isDemoMode) {
+            setQuestions(DEMO_TEST_QUESTIONS as any);
+            setLoading(false);
+            return;
+        }
+        // ── END DEMO ───────────────────────────────────────────
+
         async function fetchTest() {
             try {
-                // Fetch active test for this class and type
                 const res = await fetch(`/api/tests?classId=${user?.class_id}&type=${type}`);
                 const result = await res.json();
                 
                 if (res.ok && result.data?.questions) {
                     setQuestions(result.data.questions);
                 } else {
-                    // Fallback dummy questions for now if none found
                     setQuestions([
                         {
                             id: "q1",
@@ -98,7 +109,30 @@ export default function TestPage() {
         setSubmitting(true);
         setError("");
 
+        const isDemoMode = typeof window !== "undefined"
+            ? localStorage.getItem("eco_demo_mode") === "true"
+            : false;
+
         try {
+            // ── DEMO MODE ──────────────────────────────────────
+            if (isDemoMode) {
+                await new Promise((r) => setTimeout(r, 900));
+                // Hitung skor berdasarkan jawaban mock
+                const correct = (questions as any[]).filter((q) => {
+                    const studentAns = answers[q.id];
+                    return String(studentAns) === String(q.correct_answer);
+                }).length;
+                const demoScore = Math.round((correct / questions.length) * 100);
+                setScore(demoScore);
+                setDone(true);
+                // Arahkan ke dashboard setelah beberapa saat agar user lihat sertifikat muncul
+                if (type === "posttest") {
+                    setTimeout(() => router.push("/dashboard"), 3500);
+                }
+                return;
+            }
+            // ── END DEMO ───────────────────────────────────────
+
             const res = await fetch("/api/tests/submit", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -128,7 +162,7 @@ export default function TestPage() {
         return (
             <div className="flex flex-col items-center justify-center h-screen bg-[#F8FFF5]">
                 <Loader2 className="w-10 h-10 text-[#1A5C0A] animate-spin mb-4" />
-                <p className="text-[#1A5C0A] font-bold">Memuat {type === "pretest" ? "Pretest" : "Posttest"}...</p>
+                <p className="text-[#1A5C0A] font-bold">Memuat {type === "pretest" ? "Pemanasan" : "Bos Akhir"}...</p>
             </div>
         );
     }
@@ -141,7 +175,7 @@ export default function TestPage() {
                 </div>
                 
                 <h1 className="text-3xl font-black text-[#1A5C0A] mb-2">
-                    {type === "pretest" ? "Pre-Test Selesai!" : "Post-Test Selesai!"}
+                    {type === "pretest" ? "Pemanasan Selesai!" : "Bos Akhir Selesai!"}
                 </h1>
                 
                 <p className="text-gray-600 mb-8 max-w-xs">
@@ -177,6 +211,33 @@ export default function TestPage() {
         );
     }
 
+    if (questions.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen bg-[#F8FFF5] px-6 text-center">
+                <div className="w-20 h-20 bg-[#B4FF9F] rounded-full flex items-center justify-center mb-6">
+                    <svg className="w-10 h-10 text-[#1A5C0A]" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                    </svg>
+                </div>
+                <h2 className="text-xl font-black text-[#1A5C0A] mb-2">
+                    Soal Belum Tersedia
+                </h2>
+                <p className="text-sm text-gray-500 mb-8 max-w-xs">
+                    {type === "pretest"
+                        ? "Guru belum menambahkan soal Pemanasan untuk kelasmu."
+                        : "Guru belum menambahkan soal Bos Akhir untuk kelasmu."}
+                    {" "}Hubungi gurumu untuk info lebih lanjut.
+                </p>
+                <button
+                    onClick={() => router.push("/dashboard")}
+                    className="flex items-center gap-2 px-8 py-3 bg-[#1A5C0A] text-white rounded-2xl font-black text-sm hover:bg-[#134407] transition-all shadow-lg"
+                >
+                    Kembali ke Dashboard
+                </button>
+            </div>
+        );
+    }
+
     const currentQuestion = questions[currentQuestionIndex];
     const selectedAnswer = answers[currentQuestion.id];
     const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
@@ -187,7 +248,7 @@ export default function TestPage() {
             <div className="px-6 pt-12 pb-6 bg-white border-b border-[#1A5C0A]/10 shrink-0">
                 <div className="flex items-center justify-between mb-4">
                     <h1 className="text-xl font-black text-[#1A5C0A] uppercase tracking-tight">
-                        {type === "pretest" ? "Pre-Test" : "Post-Test"}
+                        {type === "pretest" ? "Pemanasan" : "Bos Akhir"}
                     </h1>
                     <span className="text-xs font-bold text-[#1A5C0A]/60 bg-[#B4FF9F]/30 px-3 py-1 rounded-full">
                         Soal {currentQuestionIndex + 1} dari {questions.length}

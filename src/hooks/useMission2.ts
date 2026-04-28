@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-
 import { CaseTopic } from "@/lib/mission-data";
+import { DEMO_MISSION2, DEMO_BRAINSTORMING } from "@/lib/demo/mockData";
+
 type TeamRole = "ketua" | "anggota" | "belum_pilih";
 type Mission2Step = 1 | 2 | 3;
 
@@ -37,6 +38,8 @@ export interface BrainstormingData {
     target_audience: string;
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 export function useMission2(
     studentId: string,
     classId: string,
@@ -51,9 +54,27 @@ export function useMission2(
     const [initialized, setInitialized] = useState(false);
     const [loading, setLoading] = useState(false);
 
+    const isDemoMode = typeof window !== "undefined"
+        ? localStorage.getItem("eco_demo_mode") === "true"
+        : false;
+
     useEffect(() => {
         if (!studentId || !classId) return;
         setInitialized(false);
+
+        // ── DEMO MODE ──────────────────────────────────────────
+        if (isDemoMode) {
+            setCurrentStep(DEMO_MISSION2.currentStep);
+            setTeamRole(DEMO_MISSION2.teamRole);
+            setMyTeam(DEMO_MISSION2.myTeam);
+            setAllStudents(DEMO_MISSION2.availableStudents);
+            setAllTeams(DEMO_MISSION2.allTeams);
+            setBrainstorming(DEMO_MISSION2.brainstorming);
+            setInitialized(true);
+            return;
+        }
+        // ── END DEMO ───────────────────────────────────────────
+
         initMission();
     }, [studentId, classId]);
 
@@ -83,7 +104,6 @@ export function useMission2(
 
             if (myTeamData) {
                 setMyTeam(myTeamData);
-
                 const isLeader = myTeamData.leader_id === studentId;
                 setTeamRole(isLeader ? "ketua" : "anggota");
 
@@ -107,33 +127,28 @@ export function useMission2(
     }
 
     const fetchTeams = useCallback(async () => {
-        if (!classId) return;
+        if (!classId || isDemoMode) return;
         const res = await fetch(`/api/classes/${classId}/teams`);
         const result = await res.json();
         if (res.ok) {
             const teams: TeamData[] = result.data ?? [];
             setAllTeams(teams);
-
             const myTeamData = teams.find((t) =>
                 t.team_members.some((m) => m.student_id === studentId)
             );
-            if (myTeamData) {
-                setMyTeam(myTeamData);
-            } else {
-                setMyTeam(null);
-            }
+            setMyTeam(myTeamData ?? null);
         }
     }, [classId, studentId]);
 
     const fetchStudents = useCallback(async () => {
-        if (!classId) return;
+        if (!classId || isDemoMode) return;
         const res = await fetch(`/api/classes/${classId}/students`);
         const result = await res.json();
         if (res.ok) setAllStudents(result.data ?? []);
     }, [classId]);
 
     const syncProgress = useCallback(async () => {
-        if (!studentId) return;
+        if (!studentId || isDemoMode) return;
         try {
             const res = await fetch(`/api/progress/${studentId}/mission/2`);
             const result = await res.json();
@@ -147,13 +162,11 @@ export function useMission2(
     }, [studentId]);
 
     const fetchBrainstorming = useCallback(async () => {
-        if (!myTeam) return;
+        if (!myTeam || isDemoMode) return;
         try {
             const res = await fetch(`/api/mission2/${myTeam.id}`);
             const result = await res.json();
-            if (res.ok) {
-                setBrainstorming(result.data);
-            }
+            if (res.ok) setBrainstorming(result.data);
         } catch (err) {
             console.error("Gagal fetch brainstorming:", err);
         }
@@ -161,6 +174,7 @@ export function useMission2(
 
     async function advanceStep(nextStep: Mission2Step) {
         setCurrentStep(nextStep);
+        if (isDemoMode) return;
         await fetch(`/api/progress/${studentId}/mission/2`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -171,18 +185,30 @@ export function useMission2(
     async function createTeam(name: string, selectedCase: CaseTopic) {
         setLoading(true);
         try {
-            const res = await fetch(`/api/classes/${classId}/teams`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
+            if (isDemoMode) {
+                await sleep(700);
+                // Simulasi: update local state dengan tim baru
+                const newTeam: TeamData = {
+                    id: `demo-team-${Date.now()}`,
                     name,
                     selected_case: selectedCase,
                     leader_id: studentId,
-                }),
+                    users: { id: studentId, full_name: "Andi Pratama (Demo)" },
+                    team_members: [{ student_id: studentId, users: { id: studentId, full_name: "Andi Pratama (Demo)" } }],
+                };
+                setMyTeam(newTeam);
+                setTeamRole("ketua");
+                setAllTeams((prev) => [...prev, newTeam]);
+                return { success: true };
+            }
+
+            const res = await fetch(`/api/classes/${classId}/teams`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, selected_case: selectedCase, leader_id: studentId }),
             });
             const result = await res.json();
             if (!res.ok) throw new Error(result.error);
-
             setTeamRole("ketua");
             await fetchTeams();
             await fetchStudents();
@@ -198,17 +224,26 @@ export function useMission2(
         if (!myTeam) return { success: false, error: "Tim tidak ditemukan" };
         setLoading(true);
         try {
-            const res = await fetch(
-                `/api/classes/${classId}/teams/${myTeam.id}`,
-                {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ add_student_id: memberId }),
+            if (isDemoMode) {
+                await sleep(500);
+                const newMember = allStudents.find((s) => s.student_id === memberId);
+                if (newMember) {
+                    setMyTeam((prev) => prev ? {
+                        ...prev,
+                        team_members: [...prev.team_members, { student_id: memberId, users: newMember.users }]
+                    } : prev);
+                    setAllStudents((prev) => prev.filter((s) => s.student_id !== memberId));
                 }
-            );
+                return { success: true };
+            }
+
+            const res = await fetch(`/api/classes/${classId}/teams/${myTeam.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ add_student_id: memberId }),
+            });
             const result = await res.json();
             if (!res.ok) throw new Error(result.error);
-
             await fetchTeams();
             await fetchStudents();
             return { success: true };
@@ -223,6 +258,15 @@ export function useMission2(
         if (!myTeam || memberId === studentId) return;
         setLoading(true);
         try {
+            if (isDemoMode) {
+                await sleep(400);
+                setMyTeam((prev) => prev ? {
+                    ...prev,
+                    team_members: prev.team_members.filter((m) => m.student_id !== memberId)
+                } : prev);
+                return;
+            }
+
             await fetch(`/api/classes/${classId}/teams/${myTeam.id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
@@ -239,6 +283,12 @@ export function useMission2(
         if (!myTeam) return { success: false, error: "Tim tidak ditemukan" };
         setLoading(true);
         try {
+            if (isDemoMode) {
+                await sleep(700);
+                setBrainstorming(data);
+                return { success: true };
+            }
+
             const res = await fetch(`/api/mission2/${myTeam.id}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -258,6 +308,11 @@ export function useMission2(
     async function completeMission() {
         setLoading(true);
         try {
+            if (isDemoMode) {
+                await sleep(800);
+                return { success: true };
+            }
+
             const res = await fetch(`/api/progress/${studentId}/mission/2`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },

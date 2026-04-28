@@ -14,6 +14,8 @@ export const metadata: Metadata = {
 };
 
 import { Toaster } from "sonner";
+import { DemoProvider } from "@/contexts/DemoContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 export default function RootLayout({
   children,
@@ -23,8 +25,12 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className={`${geist.variable} font-sans antialiased`}>
-        {children}
-        <Toaster position="top-center" richColors />
+        <DemoProvider>
+          <AuthProvider>
+            {children}
+            <Toaster position="top-center" richColors />
+          </AuthProvider>
+        </DemoProvider>
       </body>
     </html>
   );

@@ -76,26 +76,26 @@ export default function Misi2Page() {
     
 
     return (
-        <div className="flex flex-col">
+        <div className="flex flex-col bg-white">
             {/* Hero Header */}
-            <div className="px-4 md:px-8 lg:px-26 pt-20 lg:pt-24 pb-6 bg-[#FCFEBA]">
-                <p className="text-[10px] font-bold text-[#7A6200] uppercase tracking-widest mb-3">
+            <div className="px-4 md:px-8 lg:px-26 pt-16 lg:pt-20 pb-3 bg-[#FCFEBA]">
+                <p className="text-[10px] font-bold text-[#7A6200] uppercase tracking-widest mb-1">
                     Misi 2 · Tanggung Jawab & Keadilan
                 </p>
-                <h1 className="text-xl lg:text-2xl font-extrabold text-[#7A6200] flex items-center gap-2 mb-3">
-                    <span className="text-2xl"><Cog className="w-5 h-5 lg:w-[22px] lg:h-[22px] text-[#7A6200]" strokeWidth={3} /></span> Arsitek Solusi
+                <h1 className="text-lg lg:text-xl font-extrabold text-[#7A6200] flex items-center gap-2 mb-1">
+                    <span className="text-lg"><Cog className="w-5 h-5 lg:w-[22px] lg:h-[22px] text-[#7A6200]" strokeWidth={3} /></span> Arsitek Solusi
                 </h1>
-                <p className="text-xs lg:text-sm text-[#7A6200] leading-relaxed mb-5 max-w-lg">
+                <p className="text-[10px] lg:text-xs text-[#7A6200] leading-relaxed mb-3 max-w-lg">
                     Bentuk tim, pilih kasus, dan rancang solusi jalan tengah untuk menyelamatkan lingkungan!
                 </p>
                 <div className="flex gap-2 flex-wrap">
-                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#1A5C0A] text-xs font-semibold px-3 py-1.5 rounded-full">
+                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#1A5C0A] text-[10px] font-semibold px-2 py-1 rounded-full">
                         <span className=""><UsersRound size={16} strokeWidth={3} className="text-[#FFA1A1]" /></span> Bentuk Tim
                     </span>
-                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#1A5C0A] text-xs font-semibold px-3 py-1.5 rounded-full">
+                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#1A5C0A] text-[10px] font-semibold px-2 py-1 rounded-full">
                         <span className=""><MessagesSquare size={16} strokeWidth={3} className="text-[#333333]" /></span> Brainstroming
                     </span>
-                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#1A5C0A] text-xs font-semibold px-3 py-1.5 rounded-full">
+                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#1A5C0A] text-[10px] font-semibold px-2 py-1 rounded-full">
                         <span className=""><Activity size={16} strokeWidth={3} className="text-[#FF8D29]" /></span> Rancangan Aksi
                     </span>
                 </div>

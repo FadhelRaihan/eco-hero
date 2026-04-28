@@ -4,11 +4,19 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Leaf, Sparkles, LogIn, Loader2 } from "lucide-react";
+import { Leaf, Sparkles, LogIn, Loader2, Play } from "lucide-react";
+import { IconChevronDown } from "@tabler/icons-react";
 import { siswaLoginSchema, type SiswaLoginInput } from "@/lib/validations/auth";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +31,14 @@ export default function LoginSiswaPage() {
     const [loadingKelas, setLoadingKelas] = useState(true);
     const [serverError, setServerError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [demoLoading, setDemoLoading] = useState(false);
+
+    const handleStartDemo = () => {
+        setDemoLoading(true);
+        localStorage.setItem("eco_demo_mode", "true");
+        document.cookie = "eco_demo_mode=true; path=/; max-age=3600";
+        setTimeout(() => router.push("/dashboard"), 700);
+    };
 
     const {
         register,
@@ -125,29 +141,29 @@ export default function LoginSiswaPage() {
                         <Label className="block text-sm font-semibold text-gray-700 mb-1.5">
                             Pilih Kelas
                         </Label>
-                        <Select
-                            disabled={loadingKelas}
-                            onValueChange={(val) => {
-                                setValue("class_id", val, { shouldValidate: true });
-                            }}
-                            value={watch("class_id")}
-                        >
-                            <SelectTrigger
-                                className={cn(
-                                    "w-full rounded-xl border-2 bg-gray-50",
-                                    errors.class_id ? "border-red-300" : "border-gray-200"
-                                )}
-                            >
-                                <SelectValue placeholder={loadingKelas ? "Memuat kelas..." : "-- Pilih kelasmu --"} />
-                            </SelectTrigger>
-                            <SelectContent>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className="h-12 w-full p-4 justify-between border-2 border-gray-100 rounded-xl font-bold text-gray-600 hover:text-[#1A5C0A] hover:border-[#1A5C0A] transition-all bg-white"
+                                >
+                                    {kelasList.find(k => k.id === watch("class_id"))?.name || "Pilih Kelas"}
+                                    <IconChevronDown className="w-3 h-3 ml-2" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="rounded-2xl border-none shadow-2xl p-2">
+                                <p className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400">Pilih Kelasmu</p>
                                 {kelasList.map((kelas) => (
-                                    <SelectItem key={kelas.id} value={kelas.id}>
+                                    <DropdownMenuCheckboxItem key={kelas.id} checked={watch("class_id") === kelas.id} onCheckedChange={(value) => {
+                                        if (value) {
+                                            setValue("class_id", kelas.id);
+                                        }
+                                    }}>
                                         {kelas.name}
-                                    </SelectItem>
+                                    </DropdownMenuCheckboxItem>
                                 ))}
-                            </SelectContent>
-                        </Select>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         {errors.class_id && (
                             <p className="text-xs text-red-500 mt-1">
                                 {errors.class_id.message}
@@ -186,6 +202,30 @@ export default function LoginSiswaPage() {
                         {loading ? "Memproses..." : "Ayo Mulai Petualangan!"}
                     </Button>
                 </form>
+
+                {/* Demo Button */}
+                <div className="mt-4 flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="flex-1 h-px bg-[#1A5C0A]/10" />
+                        <span className="text-[10px] font-bold text-[#333333]/40 uppercase tracking-widest">atau</span>
+                        <div className="flex-1 h-px bg-[#1A5C0A]/10" />
+                    </div>
+                    <button
+                        onClick={handleStartDemo}
+                        disabled={demoLoading || loading}
+                        className="w-full h-11 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all border-2 border-[#1A5C0A]/30 text-[#1A5C0A] hover:bg-[#B4FF9F]/20 active:scale-95 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                        {demoLoading ? (
+                            <Loader2 className="animate-spin w-4 h-4" />
+                        ) : (
+                            <Play size={15} />
+                        )}
+                        {demoLoading ? "Memuat Demo..." : "Coba Mode Demo"}
+                    </button>
+                    <p className="text-[10px] text-[#333333]/40 font-medium text-center">
+                        Gratis · Tanpa login · Tanpa data tersimpan
+                    </p>
+                </div>
             </div>
         </div>
     );

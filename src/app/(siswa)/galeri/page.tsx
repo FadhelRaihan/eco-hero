@@ -24,7 +24,7 @@ import { id } from "date-fns/locale";
 
 export default function GaleriPage() {
     const { user } = useAuth();
-    const { items, loading, toggleLike, fetchComments, addComment } = useGallery(user?.class_id, user?.id);
+    const { items, loading, toggleLike, fetchComments, addComment, registerOpenDialog } = useGallery(user?.class_id, user?.id);
     
     const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
     const [comments, setComments] = useState<Comment[]>([]);
@@ -38,6 +38,13 @@ export default function GaleriPage() {
         const data = await fetchComments(item.id);
         setComments(data);
         setLoadingComments(false);
+        // Daftarkan dialog ini ke Realtime agar komentar dari user lain masuk
+        registerOpenDialog(item.id, setComments);
+    };
+
+    const closeDetail = () => {
+        setSelectedItem(null);
+        registerOpenDialog(null, null);
     };
 
     const formatTime = (dateStr: string) => {
@@ -192,7 +199,7 @@ export default function GaleriPage() {
             </div>
 
             {/* Detail Dialog */}
-            <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
+            <Dialog open={!!selectedItem} onOpenChange={(open) => !open && closeDetail()}>
                 <DialogContent className="max-w-2xl rounded-2xl p-0 overflow-hidden border-none shadow-2xl flex flex-col h-[92vh] w-[95vw] md:w-full">
                     {selectedItem && (
                         <>

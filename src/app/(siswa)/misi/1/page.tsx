@@ -27,7 +27,7 @@ export default function Misi1Page() {
         }
     }
 
-    const showLoading = authLoading || (!!user && !mission.initialized);
+    const showLoading = authLoading || (!!user && !mission.initialized); 
 
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-white">

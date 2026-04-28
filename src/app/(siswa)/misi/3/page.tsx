@@ -10,6 +10,7 @@ import {
     CheckCircle2, Clock, Upload, Loader2, ChevronLeft, ChevronRight, Plus,
     BookmarkCheck, X
 } from "lucide-react";
+import { IconChevronDown } from "@tabler/icons-react";
 import {
     Dialog,
     DialogContent,
@@ -21,12 +22,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarUI } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -65,6 +75,8 @@ export default function Misi3Page() {
     const [newTaskTitle, setNewTaskTitle] = useState("");
     const [newTaskDate, setNewTaskDate] = useState("");
     const [newTaskAssignee, setNewTaskAssignee] = useState("");
+    const [datePickerOpen, setDatePickerOpen] = useState(false);
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
     // State untuk Modal konfirmasi selesai
     const [taskToComplete, setTaskToComplete] = useState<string | null>(null);
@@ -79,6 +91,7 @@ export default function Misi3Page() {
         setNewTaskTitle("");
         setNewTaskDate("");
         setNewTaskAssignee("");
+        setSelectedDate(undefined);
     };
 
     const isKetua = mission.teamRole === "ketua";
@@ -143,7 +156,7 @@ export default function Misi3Page() {
 
     // Card Tugas
     const TaskCard = ({ task }: { task: TaskWithUser }) => {
-        const canEditStatus = !isApproved && (task.assigned_to === user?.id || isKetua);
+        const canEditStatus = task.assigned_to === user?.id || isKetua;
 
         return (
             <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm mb-3 relative flex flex-col gap-2">
@@ -186,33 +199,33 @@ export default function Misi3Page() {
     return (
         <div className="flex flex-col">
             {/* Hero Section */}
-            <div className="px-4 md:px-8 lg:px-26 pt-20 lg:pt-24 pb-6 bg-[#FFD59E]">
-                <p className="text-[10px] font-bold text-[#6B3A00] uppercase tracking-widest mb-3">
+            <div className="px-4 md:px-8 lg:px-26 pt-16 lg:pt-20 pb-3 bg-[#FFD59E]">
+                <p className="text-[10px] font-bold text-[#6B3A00] uppercase tracking-widest mb-1">
                     MISI 3 · PARTISIPASI & KEBERLANJUTAN
                 </p>
-                <h1 className="text-xl lg:text-2xl font-extrabold text-[#6B3A00] flex items-center gap-2 mb-3">
-                    <span className="text-2xl"><CalendarDays className="w-5 h-5 lg:w-[22px] lg:h-[22px] text-[#6B3A00]" strokeWidth={3} /></span> Sang Pengatur Waktu
+                <h1 className="text-lg lg:text-xl font-extrabold text-[#6B3A00] flex items-center gap-2 mb-1">
+                    <span className="text-lg"><CalendarDays className="w-5 h-5 lg:w-[22px] lg:h-[22px] text-[#6B3A00]" strokeWidth={3} /></span> Sang Pengatur Waktu
                 </h1>
-                <p className="text-xs lg:text-sm text-[#6B3A00] leading-relaxed mb-5 max-w-lg">
+                <p className="text-xs lg:text-sm text-[#6B3A00] leading-relaxed mb-3 max-w-lg">
                     Susun jadwal proyek timmu dan bagi tugas ke setiap anggota. Ajukan ke guru untuk di-approve!
                 </p>
                 <div className="flex gap-2 flex-wrap">
-                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#6B3A00] text-xs font-semibold px-3 py-1.5 rounded-full">
+                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#6B3A00] text-[10px] font-semibold px-2 py-1 rounded-full">
                         <Calendar size={14} className="text-[#FFA1A1]" /> Kalender
                     </span>
-                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#6B3A00] text-xs font-semibold px-3 py-1.5 rounded-full">
+                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#6B3A00] text-[10px] font-semibold px-2 py-1 rounded-full">
                         <BookmarkCheck size={14} className="text-[#333333]" /> Kanban
                     </span>
                     {isApproved ? (
-                        <span className="flex items-center gap-1.5 bg-[#A3FFA1] text-[#1A5C0A] text-xs font-semibold px-3 py-1.5 rounded-full">
+                        <span className="flex items-center gap-1.5 bg-[#A3FFA1] text-[#1A5C0A] text-[10px] font-semibold px-2 py-1 rounded-full">
                             <CheckCircle2 size={14} /> Disetujui
                         </span>
                     ) : isSubmitted ? (
-                        <span className="flex items-center gap-1.5 bg-[#FFE1A6] text-[#A66205] text-xs font-semibold px-3 py-1.5 rounded-full">
+                        <span className="flex items-center gap-1.5 bg-[#FFE1A6] text-[#A66205] text-[10px] font-semibold px-2 py-1 rounded-full">
                             <Clock size={14} /> Belum Disetujui
                         </span>
                     ) : (
-                        <span className="flex items-center gap-1.5 bg-[#FFA1A1] text-[#7A0000] text-xs font-semibold px-3 py-1.5 rounded-full">
+                        <span className="flex items-center gap-1.5 bg-[#FFA1A1] text-[#7A0000] text-[10px] font-semibold px-2 py-1 rounded-full">
                             <Clock size={14} /> Belum Diajukan
                         </span>
                     )}
@@ -242,13 +255,13 @@ export default function Misi3Page() {
                                 </h2>
                             </div>
 
-                            {/* Button Ajukan */}
-                            {isKetua && !isApproved && (
+                            {/* Button Ajukan — hanya tampil jika belum diajukan dan belum disetujui */}
+                            {isKetua && !isApproved && !isSubmitted && (
                                 <div className="flex justify-center md:justify-end">
                                     <button
                                         onClick={() => setIsSubmitting(true)}
                                         disabled={mission.tasks.length === 0}
-                                        className="w-full md:w-auto bg-[#FFDEAD] text-sm  hover:bg-[#FFD5A1] border border-[#FF9100] text-[#905D17] font-bold px-8 py-2 rounded-xl flex justify-center items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                        className="w-full md:w-auto bg-[#FFDEAD] text-sm hover:bg-[#FFD5A1] border border-[#FF9100] text-[#905D17] font-bold px-8 py-2 rounded-xl flex justify-center items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                     >
                                         Ajukan Jadwal Ke Guru <Upload size={16} strokeWidth={2.5} />
                                     </button>
@@ -257,7 +270,7 @@ export default function Misi3Page() {
 
                             {isApproved && (
                                 <div className={clsx(
-                                    "text-center p-6 bg-green-50 text-green-700 font-bold border-2 border-green-200 rounded-3xl",
+                                    "text-center text-sm px-4 py-2 bg-green-50 text-green-700 font-bold border-2 border-green-200 rounded-xl",
                                     !isKetua && "mt-5"
                                 )}>
                                     Hore! Jadwal disetujui Guru. Misi 4 sekarang bisa terbuka!
@@ -371,32 +384,73 @@ export default function Misi3Page() {
                                         {/* Select Anggota */}
                                         <div className="grid gap-2">
                                             <Label className="text-xs font-bold text-[#6B3A00]">Tugaskan Ke Siapa</Label>
-                                            <Select
-                                                onValueChange={setNewTaskAssignee}
-                                                value={newTaskAssignee}
-                                            >
-                                                <SelectTrigger className="focus:ring-[#FF9100] w-full">
-                                                    <SelectValue placeholder="Pilih anggota" />
-                                                </SelectTrigger>
-                                                <SelectContent>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        variant="outline"
+                                                        className="w-full p-4 justify-between border-2 border-gray-100 rounded-xl font-medium text-gray-600 hover:text-[#6B3A00] hover:border-[#FF9100] transition-all bg-white"
+                                                    >
+                                                        Pilih Anggota
+                                                        <IconChevronDown className="w-3 h-3 ml-2" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="start" className="rounded-2xl border-none shadow-2xl p-2">
+                                                    <p className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400">Pilih Anggota</p>
                                                     {mission.myTeam?.team_members?.map((m) => (
-                                                        <SelectItem key={m.student_id} value={m.student_id}>
-                                                            {m.users?.full_name || m.student_id}
-                                                        </SelectItem>
+                                                        <DropdownMenuCheckboxItem key={m.student_id} checked={newTaskAssignee === m.student_id} onCheckedChange={() => {
+                                                                setNewTaskAssignee(m.student_id);
+                                                        }}>
+                                                            {m.users?.full_name}
+                                                        </DropdownMenuCheckboxItem>
                                                     ))}
-                                                </SelectContent>
-                                            </Select>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </div>
 
-                                        {/* Input Tanggal */}
+                                        {/* Input Tanggal — Shadcn Calendar Picker */}
                                         <div className="grid gap-2">
                                             <Label className="text-xs font-bold text-[#6B3A00]">Tanggal</Label>
-                                            <Input
-                                                type="date"
-                                                value={newTaskDate}
-                                                onChange={(e) => setNewTaskDate(e.target.value)}
-                                                className="focus-visible:ring-[#FF9100] text-gray-600"
-                                            />
+                                            <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                                                <PopoverTrigger asChild>
+                                                    <Button
+                                                        variant="outline"
+                                                        className="w-full p-4 justify-between border-2 border-gray-100 rounded-xl font-medium text-gray-600 hover:text-[#6B3A00] hover:border-[#FF9100] transition-all bg-white"
+                                                    >
+                                                        {selectedDate
+                                                            ? format(selectedDate, "dd MMMM yyyy", { locale: localeId })
+                                                            : <span className="text-gray-400 font-medium">Pilih tanggal...</span>
+                                                        }
+                                                        <Calendar className="w-4 h-4 text-[#FF9100] ml-2 shrink-0" />
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent
+                                                    className="w-auto p-0 rounded-2xl border border-[#FFD59E] shadow-2xl overflow-hidden"
+                                                    align="start"
+                                                >
+                                                    <CalendarUI
+                                                        mode="single"
+                                                        selected={selectedDate}
+                                                        onSelect={(date) => {
+                                                            setSelectedDate(date);
+                                                            if (date) {
+                                                                // Simpan sebagai YYYY-MM-DD untuk API
+                                                                setNewTaskDate(format(date, "yyyy-MM-dd"));
+                                                            }
+                                                            setDatePickerOpen(false);
+                                                        }}
+                                                        locale={localeId}
+                                                        disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                                                        initialFocus
+                                                        classNames={{
+                                                            day_selected: "bg-[#FF9100] text-white hover:bg-[#E68200] focus:bg-[#E68200]",
+                                                            day_today: "font-black text-[#FF9100] border border-[#FF9100]/30",
+                                                            nav_button: "hover:bg-[#FFD59E]/50 rounded-xl",
+                                                            head_cell: "text-[#6B3A00]/50 font-bold text-[11px]",
+                                                            caption: "font-extrabold text-[#6B3A00]",
+                                                        }}
+                                                    />
+                                                </PopoverContent>
+                                            </Popover>
                                         </div>
                                     </div>
 

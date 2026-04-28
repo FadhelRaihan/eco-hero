@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Crown, CheckCircle, Loader2, ArrowRight } from "lucide-react";
+import { Crown, CheckCircle, Loader2, ArrowRight, Lightbulb, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BrainstormingData } from "@/hooks/useMission2";
 
@@ -28,6 +28,21 @@ function StepBadge({ num, label, done }: { num: number; label: string; done: boo
             <span className="text-sm font-bold text-gray-800">{label}</span>
         </div>
     );
+}
+
+const STEP_HINTS: Record<number, {
+    title: string;
+    tips: string[]
+}> =
+{
+    2: {
+        title: "Petunjuk Step 2: Solusi Jalan Tengah",
+        tips: [
+            "Solusi harus menguntungkan semua pihak lingkungan, masyarakat, dan ekonomi. Hindari solusi yang merugikan salah satu pihak.",
+            "Gunakan kata kerja aktif: 'mengganti', 'mengurangi', 'mengedukasi', bukan hanya 'agar lebih baik'.",
+            "Alasan keberhasilan sebaiknya didukung contoh nyata, logika sebab-akibat, atau data yang ada.",
+        ],
+    },
 }
 
 // Field component dipindah ke luar agar input tidak kehilangan fokus saat mengetik
@@ -57,6 +72,74 @@ function Field({ label, value, onChange, placeholder, disabled }: {
             />
         </div>
     );
+}
+
+function HitDropDown({ step }: {
+    step: number
+}) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+    const hint = STEP_HINTS[step];
+
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (ref.current && !ref.current.contains(e.target as Node)) {
+                setOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    if (!hint) return null;
+
+    return (
+        <div className="relative" ref={ref}>
+            <button
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                className={cn(
+                    "flex items-center gap-1.5 py-1 px-2.5 rounded-full text-[11px] font-bold border transition-all cursor-pointer",
+                    open ? "bg-[#FCFEBA] text-[#7A6A00] border=[#DECC18] shadow-sm" : "bg-[#FCFEBA]/50 text-[#7A6A00] border-[#DECC18] hover:text-gray-400 hover:border-gray-200 hover:bg-white"
+                )}
+            >
+                <Lightbulb size={13} />
+                Petunjuk
+            </button>
+
+            {open && (
+                <div className="absolute -right-4 md:right-0 top-8 z-50 w-80 bg-white rounded-2xl shadow-2xl border border-[#DECC18]/30 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                        <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-xl bg-[#FCFEBA] flex items-center justify-center">
+                                <Lightbulb size={14} className="text-[#7A6A00]" />
+                            </div>
+                            <p className="text-xs font-black text-[#7A6A00] uppercase tracking-wide">
+                                {hint.title}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setOpen(false)}
+                            className="text-gray-300 hover:text-gray-500 transition-colors cursor-pointer flex-shrink-0"
+                        >
+                            <X size={14} />
+                        </button>
+                    </div>
+                    <ul className="space-y-2">
+                        {hint.tips.map((tip, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                                <div className="w-4 h-4 rounded-full bg-[#B4FF9F] flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <span className="text-[8px] font-black text-[#1A5C0A]">{i + 1}</span>
+                                </div>
+                                <p className="text-[11px] text-gray-600 leading-relaxed">{tip}</p>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+        </div>
+    )
 }
 
 export default function Step3Brainstorming({
@@ -222,7 +305,10 @@ export default function Step3Brainstorming({
                         step < 2 && "opacity-40 pointer-events-none",
                         step > 2 && "opacity-80"
                     )}>
-                        <StepBadge num={2} label="Step 2: Solusi jalan tengah" done={step > 2} />
+                        <div className="flex items-center justify-between mb-4">
+                            <StepBadge num={2} label="Step 2: Solusi jalan tengah" done={step > 2} />
+                            <HitDropDown step={2} />
+                        </div>
                         <Field
                             label="Solusi yang kami usulkan"
                             value={form.solution}

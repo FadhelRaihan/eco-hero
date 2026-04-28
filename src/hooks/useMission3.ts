@@ -3,10 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { Mission3Schedule, Mission3Task, TaskStatus, TeamRole } from "@/types/database";
 import { TeamData } from "./useMission2";
+import { DEMO_MISSION3 } from "@/lib/demo/mockData";
 
 export interface TaskWithUser extends Mission3Task {
     user?: { id: string; full_name: string };
 }
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export function useMission3(
     studentId: string,
@@ -17,19 +20,33 @@ export function useMission3(
     const [myTeam, setMyTeam] = useState<TeamData | null>(null);
     const [schedule, setSchedule] = useState<Mission3Schedule | null>(null);
     const [tasks, setTasks] = useState<TaskWithUser[]>([]);
-    
     const [initialized, setInitialized] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    const isDemoMode = typeof window !== "undefined"
+        ? localStorage.getItem("eco_demo_mode") === "true"
+        : false;
 
     useEffect(() => {
         if (!studentId || !classId) return;
         setInitialized(false);
+
+        // ── DEMO MODE ──────────────────────────────────────────
+        if (isDemoMode) {
+            setTeamRole(DEMO_MISSION3.teamRole);
+            setMyTeam(DEMO_MISSION3.myTeam);
+            setSchedule(DEMO_MISSION3.schedule as any);
+            setTasks(DEMO_MISSION3.tasks as any);
+            setInitialized(true);
+            return;
+        }
+        // ── END DEMO ───────────────────────────────────────────
+
         initMission();
     }, [studentId, classId]);
 
     const initMission = useCallback(async () => {
         try {
-            // Fetch tim siswa dari class
             const teamsRes = await fetch(`/api/classes/${classId}/teams`);
             const teamsResult = await teamsRes.json();
             const teams: TeamData[] = teamsResult.data ?? [];
@@ -42,7 +59,6 @@ export function useMission3(
                 setMyTeam(myTeamData);
                 const isLeader = myTeamData.leader_id === studentId;
                 setTeamRole(isLeader ? "ketua" : "anggota");
-
                 await fetchScheduleAndTasks(myTeamData.id);
             } else {
                 setTeamRole("belum_pilih");
@@ -60,10 +76,8 @@ export function useMission3(
                 fetch(`/api/mission3/${teamId}/schedule`),
                 fetch(`/api/mission3/${teamId}/tasks`),
             ]);
-            
             const scheduleResult = await scheduleRes.json();
             const tasksResult = await tasksRes.json();
-
             setSchedule(scheduleResult.data);
             setTasks(tasksResult.data ?? []);
         } catch (err) {
@@ -75,18 +89,29 @@ export function useMission3(
         if (!myTeam) return { success: false, error: "Tim tidak ditemukan" };
         setLoading(true);
         try {
-            const res = await fetch(`/api/mission3/${myTeam.id}/tasks`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
+            if (isDemoMode) {
+                await sleep(600);
+                const member = myTeam.team_members.find((m) => m.student_id === assignedTo);
+                const newTask: TaskWithUser = {
+                    id: `demo-task-${Date.now()}`,
+                    team_id: myTeam.id,
                     title,
                     scheduled_date: scheduledDate,
                     assigned_to: assignedTo,
-                }),
+                    status: "berjalan",
+                    user: member ? { id: member.student_id, full_name: member.users.full_name } : undefined,
+                } as any;
+                setTasks((prev) => [...prev, newTask]);
+                return { success: true };
+            }
+
+            const res = await fetch(`/api/mission3/${myTeam.id}/tasks`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, scheduled_date: scheduledDate, assigned_to: assignedTo }),
             });
             const result = await res.json();
             if (!res.ok) throw new Error(result.error);
-            
             await fetchScheduleAndTasks(myTeam.id);
             return { success: true };
         } catch (err: any) {
@@ -100,8 +125,13 @@ export function useMission3(
         if (!myTeam) return { success: false, error: "Tim tidak ditemukan" };
         setLoading(true);
         try {
-            // Optimistic update
-            setTasks(tasks.map(t => t.id === taskId ? { ...t, status } : t));
+            // Optimistic update (berlaku juga di demo mode)
+            setTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, status } : t));
+
+            if (isDemoMode) {
+                await sleep(400);
+                return { success: true };
+            }
 
             const res = await fetch(`/api/mission3/${myTeam.id}/tasks`, {
                 method: "PATCH",
@@ -110,11 +140,9 @@ export function useMission3(
             });
             const result = await res.json();
             if (!res.ok) throw new Error(result.error);
-            
             return { success: true };
         } catch (err: any) {
-            // Revert on error
-            await fetchScheduleAndTasks(myTeam.id);
+            if (!isDemoMode) await fetchScheduleAndTasks(myTeam.id);
             return { success: false, error: err.message };
         } finally {
             setLoading(false);
@@ -125,12 +153,15 @@ export function useMission3(
         if (!myTeam) return { success: false, error: "Tim tidak ditemukan" };
         setLoading(true);
         try {
-            const res = await fetch(`/api/mission3/${myTeam.id}/submit`, {
-                method: "POST",
-            });
+            if (isDemoMode) {
+                await sleep(800);
+                setSchedule((prev) => prev ? { ...prev, submitted: true } : prev);
+                return { success: true };
+            }
+
+            const res = await fetch(`/api/mission3/${myTeam.id}/submit`, { method: "POST" });
             const result = await res.json();
             if (!res.ok) throw new Error(result.error);
-            
             await fetchScheduleAndTasks(myTeam.id);
             return { success: true };
         } catch (err: any) {
@@ -150,6 +181,6 @@ export function useMission3(
         addTask,
         updateTaskStatus,
         submitSchedule,
-        fetchScheduleAndTasks
+        fetchScheduleAndTasks,
     };
 }

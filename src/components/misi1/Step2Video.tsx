@@ -123,7 +123,7 @@ export default function Step2Video({
                     {currentBlock.type === "comic" && (
                         <div className="flex-1 flex flex-col gap-3 min-h-0 overflow-hidden">
                             <div className="relative group/comic flex-1 min-h-0">
-                                <div className="relative w-full h-full rounded-3xl overflow-hidden border-4 border-[#1A5C0A]/10 bg-white shadow-xl">
+                                <div className="relative w-full h-full rounded-2xl overflow-hidden border-4 border-[#1A5C0A]/10 bg-white">
                                     <Image 
                                         src={currentBlock.images![currentComicPage]} 
                                         alt={`Komik Halaman ${currentComicPage + 1}`} 

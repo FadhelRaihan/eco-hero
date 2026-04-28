@@ -7,7 +7,16 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const teacherId = searchParams.get("teacher_id");
 
-        let query = supabase.from("classes").select("id, name, teacher_id").order("name");
+        let query = supabase
+            .from("classes")
+            .select(`
+                id,
+                name,
+                teacher_id,
+                class_members(count),
+                teams(count)
+            `)
+            .order("name");
 
         if (teacherId) {
             query = query.eq("teacher_id", teacherId);
@@ -16,7 +25,20 @@ export async function GET(request: NextRequest) {
         const { data, error } = await query;
         if (error) throw error;
 
-        return NextResponse.json({ data });
+        // Normalisasi count dari array [{count: N}] → N
+        const normalized = (data ?? []).map((kelas: any) => ({
+            id: kelas.id,
+            name: kelas.name,
+            teacher_id: kelas.teacher_id,
+            member_count: kelas.class_members?.[0]?.count ?? 0,
+            team_count: kelas.teams?.[0]?.count ?? 0,
+        }));
+
+        return NextResponse.json({ data: normalized }, {
+            headers: {
+                "Cache-Control": "private, max-age=30, stale-while-revalidate=60",
+            },
+        });
     } catch {
         return NextResponse.json({ error: "Gagal mengambil daftar kelas" }, { status: 500 });
     }

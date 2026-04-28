@@ -24,7 +24,9 @@ export async function GET(request: NextRequest) {
 
         if (testError) {
             // If not found, it might just mean no active test
-            return NextResponse.json({ data: null });
+            return NextResponse.json({ data: null }, {
+                headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" },
+            });
         }
 
         // 2. Fetch the questions for this test
@@ -36,12 +38,16 @@ export async function GET(request: NextRequest) {
 
         if (qError) throw qError;
 
-        return NextResponse.json({
-            data: {
-                ...test,
-                questions
+        return NextResponse.json(
+            { data: { ...test, questions } },
+            {
+                headers: {
+                    // Soal tes jarang berubah → cache di edge Vercel 2 menit
+                    // Semua siswa di kelas yang sama terima response yang sama
+                    "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300",
+                },
             }
-        });
+        );
     } catch (error: any) {
         console.error("GET /api/tests error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

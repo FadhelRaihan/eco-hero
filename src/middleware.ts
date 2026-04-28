@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const SISWA_ROUTES = ["/dashboard", "/misi", "/galeri"];
+const SISWA_ROUTES = ["/dashboard", "/misi", "/galeri", "/test"];
 const GURU_ROUTES = ["/guru"];
 
 export function middleware(request: NextRequest) {
@@ -8,12 +8,13 @@ export function middleware(request: NextRequest) {
 
     const siswaToken = request.cookies.get("siswa_token")?.value;
     const guruToken = request.cookies.get("guru_token")?.value;
+    const demoMode = request.cookies.get("eco_demo_mode")?.value === "true";
 
-    // Proteksi route Siswa
+    // Proteksi route Siswa — demo mode bypass
     const isSiswaRoute = SISWA_ROUTES.some((route) =>
         pathname.startsWith(route)
     );
-    if (isSiswaRoute && !siswaToken) {
+    if (isSiswaRoute && !siswaToken && !demoMode) {
         return NextResponse.redirect(new URL("/login/siswa", request.url));
     }
 
@@ -35,9 +36,3 @@ export function middleware(request: NextRequest) {
 
     return NextResponse.next();
 }
-
-export const config = {
-    matcher: [
-        "/((?!_next/static|_next/image|favicon.ico|api).*)",
-    ],
-};

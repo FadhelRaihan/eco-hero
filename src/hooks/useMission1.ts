@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Mission1ForumPost } from "@/types/database";
 import { CaseTopic } from "@/lib/mission-data";
+import { DEMO_MISSION1 } from "@/lib/demo/mockData";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -10,6 +11,8 @@ interface PostWithMeta extends Mission1ForumPost {
     users: { id: string; full_name: string };
     mission1_forum_comments: { count: number }[];
 }
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export function useMission1(studentId: string, classId: string) {
     const [currentStep, setCurrentStep] = useState<Step>(1);
@@ -23,9 +26,27 @@ export function useMission1(studentId: string, classId: string) {
     const [submitting, setSubmitting] = useState(false);
     const [initialized, setInitialized] = useState(false);
 
+    const isDemoMode = typeof window !== "undefined"
+        ? localStorage.getItem("eco_demo_mode") === "true"
+        : false;
+
     useEffect(() => {
         if (!studentId || !classId) return;
         setInitialized(false);
+
+        // ── DEMO MODE ──────────────────────────────────────────
+        if (isDemoMode) {
+            setCurrentStep(DEMO_MISSION1.currentStep);
+            setSelectedLocation(DEMO_MISSION1.selectedLocation);
+            setVideoWatched(DEMO_MISSION1.videoWatched);
+            setQuestionAnswered(DEMO_MISSION1.questionAnswered);
+            setQuestionAnswer(DEMO_MISSION1.questionAnswer);
+            setPosts(DEMO_MISSION1.posts as any);
+            setHasPosted(DEMO_MISSION1.hasPosted);
+            setInitialized(true);
+            return;
+        }
+        // ── END DEMO ───────────────────────────────────────────
 
         async function syncStep() {
             try {
@@ -37,7 +58,6 @@ export function useMission1(studentId: string, classId: string) {
                     const step = (data.mission1_step ?? 1) as Step;
                     setCurrentStep(step);
 
-                    // Sinkronisasi Kasus dari Database
                     if (data.mission1_case) {
                         const legacyMap: Record<string, CaseTopic> = {
                             tumpukan_sampah: "sampah",
@@ -47,20 +67,16 @@ export function useMission1(studentId: string, classId: string) {
                         setSelectedLocation(normalizedCase);
                     }
 
-                    if (step >= 2) {
-                        setVideoWatched(data.mission1_video_watched ?? false);
-                    }
+                    if (step >= 2) setVideoWatched(data.mission1_video_watched ?? false);
 
                     if (step >= 3) {
                         setQuestionAnswered(!!data.mission1_question_answer);
-                        if (data.mission1_question_answer) {
-                            setQuestionAnswer(data.mission1_question_answer);
-                        }
+                        if (data.mission1_question_answer) setQuestionAnswer(data.mission1_question_answer);
                     }
 
                     if (step === 4) {
                         const postsRes = await fetch(`/api/mission1/${classId}/posts`);
-                        const postsResult = await postsRes.ok ? await postsRes.json() : { data: [] };
+                        const postsResult = postsRes.ok ? await postsRes.json() : { data: [] };
                         if (postsRes.ok) {
                             const fetchedPosts: PostWithMeta[] = postsResult.data ?? [];
                             setPosts(fetchedPosts);
@@ -82,7 +98,7 @@ export function useMission1(studentId: string, classId: string) {
     }, [studentId, classId]);
 
     const fetchPosts = useCallback(async () => {
-        if (!classId) return;
+        if (!classId || isDemoMode) return;
         setLoadingPosts(true);
         try {
             const res = await fetch(`/api/mission1/${classId}/posts`);
@@ -90,8 +106,7 @@ export function useMission1(studentId: string, classId: string) {
             if (res.ok) {
                 const fetchedPosts: PostWithMeta[] = result.data ?? [];
                 setPosts(fetchedPosts);
-                const ownPost = fetchedPosts.some((p) => p.student_id === studentId);
-                if (ownPost) setHasPosted(true);
+                if (fetchedPosts.some((p) => p.student_id === studentId)) setHasPosted(true);
             }
         } finally {
             setLoadingPosts(false);
@@ -100,6 +115,7 @@ export function useMission1(studentId: string, classId: string) {
 
     async function advanceStep(nextStep: Step) {
         setCurrentStep(nextStep);
+        if (isDemoMode) return;
         await fetch(`/api/progress/${studentId}/mission/1`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -109,7 +125,7 @@ export function useMission1(studentId: string, classId: string) {
 
     async function handleLocationSelect(location: CaseTopic) {
         setSelectedLocation(location);
-        // Simpan pilihan kasus ke database
+        if (isDemoMode) return;
         await fetch(`/api/progress/${studentId}/mission/1`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -130,6 +146,7 @@ export function useMission1(studentId: string, classId: string) {
 
     async function handleVideoComplete() {
         setVideoWatched(true);
+        if (isDemoMode) return;
         await fetch(`/api/progress/${studentId}/mission/1`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -140,6 +157,7 @@ export function useMission1(studentId: string, classId: string) {
     async function handleQuestionSubmit(answer: string) {
         setQuestionAnswered(true);
         setQuestionAnswer(answer);
+        if (isDemoMode) return;
         await fetch(`/api/progress/${studentId}/mission/1`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -154,6 +172,24 @@ export function useMission1(studentId: string, classId: string) {
     }) {
         setSubmitting(true);
         try {
+            if (isDemoMode) {
+                await sleep(700);
+                const demoPost = {
+                    id: `demo-post-${Date.now()}`,
+                    student_id: studentId,
+                    class_id: classId,
+                    case_topic: postData.case_topic,
+                    perspective_env: postData.perspective_env,
+                    perspective_soc: postData.perspective_soc,
+                    created_at: new Date().toISOString(),
+                    users: { id: studentId, full_name: "Andi Pratama (Demo)" },
+                    mission1_forum_comments: [{ count: 0 }],
+                } as any;
+                setPosts((prev) => [demoPost, ...prev]);
+                setHasPosted(true);
+                return { success: true };
+            }
+
             const res = await fetch(`/api/mission1/${classId}/posts`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -161,7 +197,6 @@ export function useMission1(studentId: string, classId: string) {
             });
             const result = await res.json();
             if (!res.ok) throw new Error(result.error);
-
             setHasPosted(true);
             setPosts((prev) => [result.data, ...prev]);
             return { success: true };
@@ -175,6 +210,10 @@ export function useMission1(studentId: string, classId: string) {
     async function completeMission() {
         setSubmitting(true);
         try {
+            if (isDemoMode) {
+                await sleep(800);
+                return { success: true };
+            }
             const res = await fetch(`/api/progress/${studentId}/mission/1`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },

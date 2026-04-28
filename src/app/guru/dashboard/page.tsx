@@ -10,9 +10,8 @@ interface Kelas {
     id: string;
     name: string;
     teacher_id: string;
-    _count?: {
-        members: number;
-    };
+    member_count: number;
+    team_count: number;
 }
 
 export default function DashboardGuruPage() {
@@ -127,8 +126,8 @@ export default function DashboardGuruPage() {
             <div className="grid grid-cols-3 gap-3 mb-6">
                 {[
                     { icon: School, label: "Total Kelas", value: kelasList.length, color: "bg-[#B4FF9F] text-[#1A5C0A]" },
-                    { icon: Users, label: "Total Siswa", value: "-", color: "bg-[#F9FFA4] text-[#7A7200]" },
-                    { icon: CheckCircle, label: "Tim Terbentuk", value: "-", color: "bg-[#FFD59E] text-[#6b3a00]" },
+                    { icon: Users, label: "Total Siswa", value: kelasList.reduce((sum, k) => sum + (k.member_count ?? 0), 0), color: "bg-[#F9FFA4] text-[#7A7200]" },
+                    { icon: CheckCircle, label: "Tim Terbentuk", value: kelasList.reduce((sum, k) => sum + (k.team_count ?? 0), 0), color: "bg-[#FFD59E] text-[#6b3a00]" },
                 ].map((stat) => (
                     <div key={stat.label} className="bg-white rounded-2xl border border-[#1A5C0A]/10 p-4 shadow-sm">
                         <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center mb-2", stat.color)}>

@@ -14,8 +14,8 @@ const MISSION_CONFIG = [
     {
         id: "pretest",
         number: 0,
-        title: "Pre-Test",
-        subtitle: "Evaluasi awal sebelum mulai",
+        title: "Pemanasan",
+        subtitle: "Pemanasan awal sebelum mulai",
         icon: ClipboardCheck,
         color: {
             bg: "bg-[#FFF9C4]",
@@ -99,8 +99,8 @@ const MISSION_CONFIG = [
     {
         id: "posttest",
         number: 5,
-        title: "Post-Test",
-        subtitle: "Evaluasi akhir perjalanan",
+        title: "Bos Akhir",
+        subtitle: "Tantangan terakhir perjalanan",
         icon: GraduationCap,
         color: {
             bg: "bg-[#C5CAE9]",
@@ -167,7 +167,7 @@ export default function MissionCard({
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                     <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide opacity-60">
-                        {config.number === 0 || config.number === 5 ? "Tahap Evaluasi" : `Misi ${config.number}`}
+                        {config.number === 0 || config.number === 5 ? `Tahap ${config.subtitle}` : `Misi ${config.number}`}
                     </p>
                     <p className={cn(
                         "font-bold truncate",

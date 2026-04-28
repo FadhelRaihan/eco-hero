@@ -129,14 +129,14 @@ export default function ClassTestConfigPage() {
                 body: JSON.stringify({
                     class_id: classId,
                     type: activeTab,
-                    title: activeTab === "pretest" ? `Pre-Test ${className}` : `Post-Test ${className}`,
+                    title: activeTab === "pretest" ? `Pemanasan ${className}` : `Bos Akhir ${className}`,
                     questions
                 })
             });
 
             if (res.ok) {
                 toast.success("Perubahan Disimpan!", {
-                    description: `Soal ${activeTab === "pretest" ? "Pre-Test" : "Post-Test"} berhasil diperbarui.`
+                    description: `Soal ${activeTab === "pretest" ? "Pemanasan" : "Bos Akhir"} berhasil diperbarui.`
                 });
             } else {
                 const data = await res.json();
@@ -167,7 +167,7 @@ export default function ClassTestConfigPage() {
                             Kelola Soal: <span className="text-[#1A5C0A]">{className}</span>
                         </h1>
                         <p className="text-xs text-[#333333]/60 font-bold uppercase tracking-widest">
-                            Konfigurasi Instrumen {activeTab === "pretest" ? "Pre-Test" : "Post-Test"}
+                            Konfigurasi Instrumen {activeTab === "pretest" ? "Pemanasan" : "Bos Akhir"}
                         </p>
                     </div>
                 </div>
@@ -207,13 +207,13 @@ export default function ClassTestConfigPage() {
                         value="pretest"
                         className="flex items-center gap-2 px-8 py-3 rounded-xl transition-all font-bold text-xs uppercase tracking-widest data-[state=active]:bg-[#1A5C0A] data-[state=active]:text-white data-[state=active]:shadow-lg text-[#333333]/40 hover:text-[#1A5C0A] hover:bg-[#B4FF9F]/20"
                     >
-                        <ClipboardCheck size={16} /> Pre-Test
+                        <ClipboardCheck size={16} /> Pemanasan
                     </TabsTrigger>
                     <TabsTrigger
                         value="posttest"
                         className="flex items-center gap-2 px-8 py-3 rounded-xl transition-all font-bold text-xs uppercase tracking-widest data-[state=active]:bg-[#1A5C0A] data-[state=active]:text-white data-[state=active]:shadow-lg text-[#333333]/40 hover:text-[#1A5C0A] hover:bg-[#B4FF9F]/20"
                     >
-                        <GraduationCap size={16} /> Post-Test
+                        <GraduationCap size={16} /> Bos Akhir
                     </TabsTrigger>
                 </TabsList>
 

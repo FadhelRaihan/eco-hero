@@ -18,7 +18,10 @@ import {
     Loader2,
     ExternalLink,
     Download,
-    FileSpreadsheet
+    FileSpreadsheet,
+    CalendarCheck,
+    CalendarX,
+    ShieldCheck
 } from "lucide-react";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -29,6 +32,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 export default function ManajemenMisiPage() {
     const { user } = useAuth();
@@ -36,9 +40,48 @@ export default function ManajemenMisiPage() {
     const [activeTab, setActiveTab] = useState("1");
     const [data, setData] = useState<any[]>([]);
 
+    // ── Approval Jadwal Misi 3 ────────────────────────────────
+    const [schedules, setSchedules] = useState<any[]>([]);
+    const [schedulesLoading, setSchedulesLoading] = useState(false);
+    const [approvingTeamId, setApprovingTeamId] = useState<string | null>(null);
+
     useEffect(() => {
         if (user?.id) fetchMissionData(activeTab);
+        if (user?.id && activeTab === "3") fetchSchedules();
     }, [user?.id, activeTab]);
+
+    async function fetchSchedules() {
+        if (!user?.id) return;
+        setSchedulesLoading(true);
+        try {
+            const res = await fetch(`/api/guru/schedules?teacher_id=${user.id}`);
+            const result = await res.json();
+            if (res.ok) setSchedules(result.data || []);
+        } catch {
+            toast.error("Gagal memuat jadwal");
+        } finally {
+            setSchedulesLoading(false);
+        }
+    }
+
+    async function handleApprove(teamId: string) {
+        setApprovingTeamId(teamId);
+        try {
+            const res = await fetch(`/api/mission3/${teamId}/approve`, { method: "POST" });
+            const result = await res.json();
+            if (res.ok) {
+                toast.success("Jadwal berhasil disetujui! Misi 4 terbuka untuk tim ini.");
+                fetchSchedules();
+            } else {
+                toast.error(result.error || "Gagal menyetujui jadwal");
+            }
+        } catch {
+            toast.error("Terjadi kesalahan koneksi");
+        } finally {
+            setApprovingTeamId(null);
+        }
+    }
+    // ─────────────────────────────────────────────────────────
 
     async function fetchMissionData(missionNum: string) {
         setLoading(true);
@@ -394,6 +437,118 @@ export default function ManajemenMisiPage() {
 
                 {[1, 2, 3, 4].map((n) => (
                     <TabsContent key={n} value={String(n)} className="space-y-4 outline-none">
+
+                        {/* ── APPROVAL SECTION — hanya di Misi 3 ── */}
+                        {n === 3 && (
+                            <div className="bg-white rounded-2xl border border-[#FFD59E] shadow-sm overflow-hidden">
+                                <div className="px-6 py-4 bg-[#FFF8EC] border-b border-[#FFD59E] flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-[#FFD59E] rounded-xl flex items-center justify-center">
+                                            <CalendarCheck size={16} className="text-[#6B3A00]" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-black text-[#6B3A00] text-sm">Persetujuan Jadwal Tim</h3>
+                                            <p className="text-[10px] text-[#6B3A00]/60 font-semibold">Tinjau dan setujui jadwal yang diajukan oleh setiap tim</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={fetchSchedules}
+                                        className="text-xs font-bold text-[#6B3A00]/60 hover:text-[#6B3A00] transition-colors cursor-pointer"
+                                    >
+                                        {schedulesLoading ? <Loader2 size={14} className="animate-spin" /> : "↻ Refresh"}
+                                    </button>
+                                </div>
+
+                                <div className="divide-y divide-[#FFD59E]/40">
+                                    {schedulesLoading ? (
+                                        <div className="flex items-center justify-center py-12 gap-3">
+                                            <Loader2 size={20} className="animate-spin text-[#FF9100]" />
+                                            <p className="text-sm text-[#6B3A00]/50 font-medium">Memuat jadwal...</p>
+                                        </div>
+                                    ) : schedules.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-12 gap-2">
+                                            <CalendarX size={32} className="text-[#FFD59E]" />
+                                            <p className="text-sm font-bold text-[#6B3A00]/50">Belum ada jadwal yang diajukan</p>
+                                            <p className="text-xs text-[#6B3A00]/40">Jadwal akan muncul di sini setelah tim mengajukan</p>
+                                        </div>
+                                    ) : (
+                                        schedules.map((s: any) => {
+                                            const isApproved = s.teacher_approved;
+                                            const isPending = !!s.submitted_at && !isApproved;
+                                            const approving = approvingTeamId === s.team_id;
+                                            return (
+                                                <div key={s.id} className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="font-black text-sm text-[#333333]">{s.teams?.name || "Tim Tidak Dikenal"}</span>
+                                                            {isApproved && (
+                                                                <span className="text-[9px] font-black px-2 py-0.5 bg-[#B4FF9F] text-[#1A5C0A] rounded-full uppercase tracking-wide flex items-center gap-1">
+                                                                    <ShieldCheck size={9} /> Disetujui
+                                                                </span>
+                                                            )}
+                                                            {isPending && (
+                                                                <span className="text-[9px] font-black px-2 py-0.5 bg-[#FFE4A6] text-[#7A5200] rounded-full uppercase tracking-wide flex items-center gap-1">
+                                                                    <Clock size={9} /> Menunggu
+                                                                </span>
+                                                            )}
+                                                            {!s.submitted_at && (
+                                                                <span className="text-[9px] font-black px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full uppercase tracking-wide">
+                                                                    Belum Diajukan
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-xs text-[#6B3A00]/60 font-medium">
+                                                            {(s.mission3_tasks || []).length} tugas ·
+                                                            {s.submitted_at
+                                                                ? ` Diajukan ${new Date(s.submitted_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}`
+                                                                : " Belum diajukan"
+                                                            }
+                                                            {isApproved && s.approved_at &&
+                                                                ` · Disetujui ${new Date(s.approved_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}`
+                                                            }
+                                                        </p>
+                                                        {/* Task preview */}
+                                                        {(s.mission3_tasks || []).slice(0, 3).length > 0 && (
+                                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                                {(s.mission3_tasks || []).slice(0, 3).map((t: any) => (
+                                                                    <span key={t.id} className="text-[9px] font-bold px-2 py-0.5 bg-[#FFF3DF] text-[#905D17] rounded-md border border-[#FFD59E]/50">
+                                                                        {t.title}
+                                                                    </span>
+                                                                ))}
+                                                                {(s.mission3_tasks || []).length > 3 && (
+                                                                    <span className="text-[9px] font-bold px-2 py-0.5 bg-gray-50 text-gray-400 rounded-md">
+                                                                        +{(s.mission3_tasks || []).length - 3} lainnya
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {isPending && (
+                                                        <Button
+                                                            onClick={() => handleApprove(s.team_id)}
+                                                            disabled={approving}
+                                                            className="shrink-0 bg-[#1A5C0A] hover:bg-[#134407] text-white font-bold px-5 h-9 rounded-xl text-xs cursor-pointer"
+                                                        >
+                                                            {approving
+                                                                ? <><Loader2 size={13} className="animate-spin mr-1" /> Menyetujui...</>
+                                                                : <><ShieldCheck size={13} className="mr-1" /> Setujui Jadwal</>
+                                                            }
+                                                        </Button>
+                                                    )}
+                                                    {isApproved && (
+                                                        <div className="shrink-0 flex items-center gap-1.5 text-[#1A5C0A] font-bold text-xs">
+                                                            <CheckCircle size={16} /> Sudah Disetujui
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-1 border border-[#1A5C0A]/10 shadow-xl shadow-[#1A5C0A]/5">
                             <DataTable
                                 columns={

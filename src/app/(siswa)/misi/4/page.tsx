@@ -19,7 +19,6 @@ export default function Misi4Page() {
 
     useEffect(() => {
         if (mission.initialized) {
-            // Determine initial step
             if (mission.teamRole === "anggota") {
                 setCurrentStep(2);
             } else if (mission.submissions && mission.submissions.length > 0) {
@@ -33,6 +32,8 @@ export default function Misi4Page() {
             }
         }
     }, [mission.initialized, mission.submissions, mission.reflection, mission.teamRole]);
+
+
 
     const handleSaveDocumentation = async (files: any) => {
         const res = await mission.uploadDocumentation(files);
@@ -58,21 +59,21 @@ export default function Misi4Page() {
     return (
         <div className="flex flex-col">
             {/* Hero Header */}
-            <div className="px-4 md:px-8 lg:px-26 pt-20 lg:pt-24 pb-6 bg-[#FFAFAF]">
-                <p className="text-[10px] font-bold text-[#7A2A2A] uppercase tracking-widest mb-3">
+            <div className="px-4 md:px-8 lg:px-26 pt-16 lg:pt-20 pb-3 bg-[#FFAFAF]">
+                <p className="text-[10px] font-bold text-[#7A2A2A] uppercase tracking-widest mb-1">
                     Misi 4 · Agen Perubahan
                 </p>
-                <h1 className="text-xl lg:text-2xl font-extrabold text-[#7A2A2A] flex items-center gap-2 mb-3">
+                <h1 className="text-lg lg:text-2xl font-extrabold text-[#7A2A2A] flex items-center gap-2 mb-1">
                     <span className="text-2xl"><PartyPopper className="w-5 h-5 lg:w-[22px] lg:h-[22px] text-[#7A2A2A]" strokeWidth={3} /></span> Aksi Nyata
                 </h1>
-                <p className="text-xs lg:text-sm text-[#7A2A2A] leading-relaxed mb-5 max-w-lg">
+                <p className="text-xs lg:text-sm text-[#7A2A2A] leading-relaxed mb-3 max-w-lg">
                     Waktunya beraksi! Upload dokumentasi proyekmu, lihat karya teman-teman, dan refleksikan perjalananmu.
                 </p>
                 <div className="flex gap-2 flex-wrap">
-                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#7A2A2A] text-xs font-semibold px-3 py-1.5 rounded-full border border-[#7A2A2A]/20">
+                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#7A2A2A] text-[10px] font-semibold px-2 py-1 rounded-full border border-[#7A2A2A]/20">
                         <Upload size={16} strokeWidth={3} className="text-[#FFA1A1]" /> Dokumentasi
                     </span>
-                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#7A2A2A] text-xs font-semibold px-3 py-1.5 rounded-full border border-[#7A2A2A]/20">
+                    <span className="flex items-center gap-1.5 bg-[#FFFDF1] text-[#7A2A2A] text-[10px] font-semibold px-2 py-1 rounded-full border border-[#7A2A2A]/20">
                         <FileText size={16} strokeWidth={3} className="text-[#333333]" /> Refleksi
                     </span>
                 </div>

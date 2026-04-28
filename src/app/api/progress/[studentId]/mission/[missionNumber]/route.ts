@@ -111,8 +111,8 @@ export async function PATCH(
                                 completed_at: new Date().toISOString(),
                             }, { onConflict: "team_id,mission_number" });
 
-                        // Unlock misi berikutnya untuk semua anggota tim
                         if (missionNum < 4) {
+                            // Unlock misi berikutnya untuk semua anggota tim
                             for (const memberId of memberIds) {
                                 await supabase
                                     .from("mission_progress")
@@ -121,6 +121,16 @@ export async function PATCH(
                                     .eq("mission_number", missionNum + 1)
                                     .eq("status", "locked");
                             }
+                        }
+
+                        if (missionNum === 4) {
+                            // Buka post-test untuk semua anggota tim
+                            await supabase
+                                .from("mission_progress")
+                                .update({ posttest_status: "in_progress" })
+                                .in("student_id", memberIds)
+                                .eq("mission_number", 4)
+                                .eq("posttest_status", "locked");
                         }
                     }
                 }
@@ -135,6 +145,16 @@ export async function PATCH(
                 .eq("student_id", studentId)
                 .eq("mission_number", 2)
                 .eq("status", "locked");
+        }
+
+        // Jika misi 4 completed, langsung buka post-test untuk individu ini
+        if (body.status === "completed" && missionNum === 4) {
+            await supabase
+                .from("mission_progress")
+                .update({ posttest_status: "in_progress" })
+                .eq("student_id", studentId)
+                .eq("mission_number", 4)
+                .eq("posttest_status", "locked");
         }
 
         return NextResponse.json({ message: "Progress diperbarui" });
