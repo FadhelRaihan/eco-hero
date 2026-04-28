@@ -10,9 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function LoginGuruPage() {
   const router = useRouter();
+  const { loginUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -43,8 +45,8 @@ export default function LoginGuruPage() {
         return;
       }
 
+      loginUser(result.data.user);
       router.push("/guru/dashboard");
-      router.refresh();
     } catch {
       setServerError("Tidak dapat terhubung ke server");
     } finally {

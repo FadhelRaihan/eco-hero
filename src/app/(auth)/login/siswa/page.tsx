@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Leaf, Sparkles, LogIn, Loader2, Play } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { DEMO_AUTH_USER } from "@/contexts/DemoContext";
 import { IconChevronDown } from "@tabler/icons-react";
 import { siswaLoginSchema, type SiswaLoginInput } from "@/lib/validations/auth";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,8 @@ export default function LoginSiswaPage() {
         setDemoLoading(true);
         localStorage.setItem("eco_demo_mode", "true");
         document.cookie = "eco_demo_mode=true; path=/; max-age=3600";
+        // Set user di AuthContext langsung agar dashboard tidak loading stuck
+        loginUser(DEMO_AUTH_USER as any);
         setTimeout(() => router.push("/dashboard"), 700);
     };
 

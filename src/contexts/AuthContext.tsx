@@ -91,6 +91,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const loginUser = useCallback((newUser: AuthUser) => {
         setUser(newUser);
         setLoading(false);
+        // Sync isDemoMode dari localStorage (sudah di-set sebelum loginUser dipanggil)
+        const demo = typeof window !== "undefined"
+            ? localStorage.getItem("eco_demo_mode") === "true"
+            : false;
+        setIsDemoMode(demo);
     }, []);
 
     return (
