@@ -10,7 +10,7 @@ export default function Misi1Layout({
             role="siswa"
             variant="misi"
             backUrl="/dashboard"
-            title="Misi 3 - Sang Pengatur Waktu"
+            title="Misi 3 - Pengatur Waktu"
             bgBtn="bg-[#FFD59E]"
             textColor="text-[#6B3A00]"
         />

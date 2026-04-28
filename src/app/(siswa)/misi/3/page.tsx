@@ -362,7 +362,7 @@ export default function Misi3Page() {
                         {/* Modal Tambah Tugas (Rincian Tugas) */}
                         {isAddingTask && (
                             <Dialog open={isAddingTask} onOpenChange={setIsAddingTask}>
-                                <DialogContent className="max-w-md rounded-xl">
+                                <DialogContent className="w-full rounded-xl">
                                     <DialogHeader>
                                         <DialogTitle className="text-[#6B3A00] font-extrabold text-lg">
                                             Rincian Tugas

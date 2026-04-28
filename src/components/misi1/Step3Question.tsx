@@ -35,7 +35,7 @@ export default function Step3Question({
     }
 
     return (
-        <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex flex-col">
             <div className="py-4">
                 {/* Header Tahap */}
                 <div className="flex items-center gap-3 mb-5 shrink-0">

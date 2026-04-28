@@ -30,7 +30,7 @@ export default function Misi1Page() {
     const showLoading = authLoading || (!!user && !mission.initialized); 
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden bg-white">
+        <div className="flex flex-col bg-white">
             {/* Hero Header */}
             <div className="px-4 md:px-8 lg:px-26 pt-16 lg:pt-20 pb-3 bg-[#B4FF9F]">
                 <p className="text-[10px] font-bold text-[#2D7A1A] uppercase tracking-widest mb-1">
