@@ -1,4 +1,7 @@
+export const dynamic = "force-dynamic";
+
 import TeacherSidebar from "@/components/guru/Sidebar";
+
 
 export default function GuruLayout({
   children,
