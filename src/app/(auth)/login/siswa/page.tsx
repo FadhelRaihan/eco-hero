@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Leaf, Sparkles, LogIn, Loader2, Play } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DEMO_AUTH_USER } from "@/contexts/DemoContext";
+// import EntranceOverlay from "@/components/shared/EntranceOverlay";
 import { IconChevronDown } from "@tabler/icons-react";
 import { siswaLoginSchema, type SiswaLoginInput } from "@/lib/validations/auth";
 import { Input } from "@/components/ui/input";
@@ -102,6 +103,7 @@ export default function LoginSiswaPage() {
 
     return (
         <div className="w-full max-w-md">
+            {/* <EntranceOverlay variant="siswa" /> */}
             {/* Logo & Maskot area */}
             <div className="text-center mb-6">
                 <h1 className="text-4xl font-extrabold text-[#333333]">

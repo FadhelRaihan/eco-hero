@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+// import EntranceOverlay from "@/components/shared/EntranceOverlay";
 
 export default function LoginGuruPage() {
   const router = useRouter();
@@ -56,6 +57,7 @@ export default function LoginGuruPage() {
 
   return (
     <div className="w-full max-w-md">
+      {/* <EntranceOverlay variant="guru" /> */}
       {/* Logo area */}
       <div className="text-center mb-6">
         <h1 className="text-4xl font-extrabold text-[#333333]">
