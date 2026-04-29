@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-// import EntranceOverlay from "@/components/shared/EntranceOverlay";
+import EntranceOverlay from "@/components/shared/EntranceOverlay";
 
 export default function LoginGuruPage() {
   const router = useRouter();

@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Leaf, Sparkles, LogIn, Loader2, Play } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DEMO_AUTH_USER } from "@/contexts/DemoContext";
-// import EntranceOverlay from "@/components/shared/EntranceOverlay";
+import EntranceOverlay from "@/components/shared/EntranceOverlay";
 import { IconChevronDown } from "@tabler/icons-react";
 import { siswaLoginSchema, type SiswaLoginInput } from "@/lib/validations/auth";
 import { Input } from "@/components/ui/input";
