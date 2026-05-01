@@ -84,11 +84,11 @@ export default function TeacherSidebar({ isOpen, onClose }: SidebarProps) {
 
             {/* Sidebar Container */}
             <div className={cn(
-                "w-64 h-screen bg-[#FFFDF1] border-r border-[#1A5C0A]/10 flex flex-col fixed left-0 top-0 z-[60] transition-transform duration-300 lg:translate-x-0 shadow-2xl lg:shadow-none",
+                "w-64 h-[100dvh] bg-[#FFFDF1] border-r border-[#1A5C0A]/10 flex flex-col fixed left-0 top-0 z-[60] transition-transform duration-300 lg:translate-x-0 shadow-2xl lg:shadow-none",
                 isOpen ? "translate-x-0" : "-translate-x-full"
             )}>
                 {/* Logo & Close Button (Mobile) */}
-                <div className="p-6 flex items-center justify-between">
+                <div className="p-6 flex items-center justify-between shrink-0">
                     <Link href="/guru/dashboard" className="flex items-center gap-2" onClick={onClose}>
                         <span className="text-lg font-black text-[#1A5C0A] tracking-tight">
                             ECO HERO
@@ -132,7 +132,7 @@ export default function TeacherSidebar({ isOpen, onClose }: SidebarProps) {
                 </nav>
 
                 {/* User Profile & Logout */}
-                <div className="p-4 border-t border-[#1A5C0A]/10">
+                <div className="p-4 border-t border-[#1A5C0A]/10 shrink-0 mb-safe">
                     <div className="bg-[#F9FFA4] rounded-2xl p-3 mb-3 flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-[#1A5C0A] flex items-center justify-center text-white">
                             <User size={18} />
