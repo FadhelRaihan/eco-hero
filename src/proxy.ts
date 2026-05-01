@@ -9,6 +9,7 @@ export function proxy(request: NextRequest) {
     const siswaToken = request.cookies.get("siswa_token")?.value;
     const guruToken = request.cookies.get("guru_token")?.value;
     const demoMode = request.cookies.get("eco_demo_mode")?.value === "true";
+    const guruDemoMode = request.cookies.get("eco_guru_demo_mode")?.value === "true";
 
     // Proteksi route Siswa — demo mode bypass
     const isSiswaRoute = SISWA_ROUTES.some((route) =>
@@ -22,7 +23,7 @@ export function proxy(request: NextRequest) {
     const isGuruRoute = GURU_ROUTES.some((route) =>
         pathname.startsWith(route)
     );
-    if (isGuruRoute && !guruToken) {
+    if (isGuruRoute && !guruToken && !guruDemoMode) {
         return NextResponse.redirect(new URL("/login/guru", request.url));
     }
 

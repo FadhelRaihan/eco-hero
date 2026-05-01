@@ -42,7 +42,7 @@ export const MISSION_1_DATA: Record<CaseTopic, CaseData> = {
             {
                 id: "pk-3",
                 type: "comic",
-                title: "Bagaimana Sampah Menjadi Listrik?",
+                title: "Bagaimana Sampah Menjadi Listrik? Serta hubungan norma, tanggung jawab dan hak dengan sampah!",
                 images: [
                     "/assets/komik_1/Sampah1.png",
                     "/assets/komik_1/Sampah2.png",
@@ -109,7 +109,7 @@ export const MISSION_1_DATA: Record<CaseTopic, CaseData> = {
             {
                 id: "af-7",
                 type: "comic",
-                title: "Banjir di Kota Kita",
+                title: "Macet di Kota Kita",
                 images: [
                     "/assets/komik_2/bus/Bus1.jpeg",
                     "/assets/komik_2/bus/Bus2.jpeg",
@@ -126,6 +126,8 @@ export const MISSION_1_DATA: Record<CaseTopic, CaseData> = {
             options: [
                 { label: "Kendaraan Listrik (Pribadi)", value: "kendaraan_listrik" },
                 { label: "Kendaraan BBM (Pribadi)", value: "kendaraan_bbm" },
+                { label: "Kendaraan Umum", value: "kendaraan_umum" },
+                { label: "Berjalan Kaki", value: "berjalan_kaki" },
             ],
         },
     },

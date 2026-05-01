@@ -4,14 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
+import { Eye, EyeOff, LogIn, Loader2, Play } from "lucide-react";
 import Link from "next/link";
 import { guruLoginSchema, type GuruLoginInput } from "@/lib/validations/auth";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, type AuthUser } from "@/hooks/useAuth";
+import { DEMO_GURU_USER } from "@/lib/demo/mockData";
 
 export default function LoginGuruPage() {
   const router = useRouter();
@@ -19,6 +20,17 @@ export default function LoginGuruPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
+
+  const handleStartDemo = () => {
+    setDemoLoading(true);
+    localStorage.setItem("eco_guru_demo_mode", "true");
+    document.cookie = "eco_guru_demo_mode=true; path=/; max-age=3600";
+    loginUser(DEMO_GURU_USER as AuthUser);
+    setTimeout(() => {
+      window.location.href = "/guru/dashboard";
+    }, 700);
+  };
 
   const {
     register,
@@ -166,6 +178,31 @@ export default function LoginGuruPage() {
             </Link>
           </p>
         </form>
+
+        {/* Demo Button */}
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <div className="flex items-center gap-3 w-full">
+            <div className="flex-1 h-px bg-[#1A5C0A]/10" />
+            <span className="text-[10px] font-bold text-[#333333]/40 uppercase tracking-widest">atau</span>
+            <div className="flex-1 h-px bg-[#1A5C0A]/10" />
+          </div>
+          <button
+            type="button"
+            onClick={handleStartDemo}
+            disabled={demoLoading || loading}
+            className="w-full h-11 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all border-2 border-[#1A5C0A]/30 text-[#1A5C0A] hover:bg-[#B4FF9F]/20 active:scale-95 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {demoLoading ? (
+              <Loader2 className="animate-spin w-4 h-4" />
+            ) : (
+              <Play size={15} />
+            )}
+            {demoLoading ? "Memuat Demo..." : "Coba Mode Demo"}
+          </button>
+          <p className="text-[10px] text-[#333333]/40 font-medium text-center">
+            Gratis · Tanpa login · Tanpa data tersimpan
+          </p>
+        </div>
       </div>
     </div>
   );

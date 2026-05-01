@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { DEMO_GURU_TEST_RESULTS } from "@/lib/demo/mockData";
 import {
     Loader2,
     History,
@@ -49,8 +50,18 @@ export default function GuruManageTestsPage() {
     const [loading, setLoading] = useState(true);
     const [selectedSubmission, setSelectedSubmission] = useState<TestResult | null>(null);
 
+    const isDemoMode = typeof window !== "undefined"
+        ? localStorage.getItem("eco_guru_demo_mode") === "true"
+        : false;
+
     useEffect(() => {
         async function fetchData() {
+            if (isDemoMode) {
+                setTestResults(DEMO_GURU_TEST_RESULTS as TestResult[]);
+                setLoading(false);
+                return;
+            }
+
             setLoading(true);
             try {
                 const res = await fetch(`/api/guru/test-results?teacher_id=${user?.id}`);
@@ -63,8 +74,8 @@ export default function GuruManageTestsPage() {
             }
         }
 
-        if (user?.id) fetchData();
-    }, [user?.id]);
+        if (user?.id || isDemoMode) fetchData();
+    }, [user?.id, isDemoMode]);
 
     const exportResultsToExcel = async () => {
         try {

@@ -81,12 +81,27 @@ export default function ManajemenMisiPage() {
     const [data, setData] = useState<MissionSubmission[]>([]);
     const [selectedM4Submission, setSelectedM4Submission] = useState<MissionSubmission | null>(null);
 
-    // ── Approval Jadwal Misi 3 ────────────────────────────────
     const [schedules, setSchedules] = useState<Mission3Schedule[]>([]);
     const [schedulesLoading, setSchedulesLoading] = useState(false);
     const [approvingTeamId, setApprovingTeamId] = useState<string | null>(null);
 
+    const isDemoMode = typeof window !== "undefined"
+        ? localStorage.getItem("eco_guru_demo_mode") === "true"
+        : false;
+
     const fetchSchedules = useCallback(async () => {
+        if (isDemoMode) {
+            setSchedulesLoading(true);
+            setTimeout(() => {
+                setSchedules([
+                    { id: "sch-1", team_id: "demo-team-001", teacher_approved: false, submitted_at: new Date().toISOString(), approved_at: null, teams: { name: "Penyelamat Bumi" }, mission3_tasks: [{ id: "t1", title: "Membersihkan halaman" }] },
+                    { id: "sch-2", team_id: "demo-team-002", teacher_approved: true, submitted_at: new Date(Date.now() - 86400000).toISOString(), approved_at: new Date().toISOString(), teams: { name: "Pasukan Hijau" }, mission3_tasks: [{ id: "t2", title: "Membuat poster" }] },
+                ]);
+                setSchedulesLoading(false);
+            }, 500);
+            return;
+        }
+
         if (!user?.id) return;
         setSchedulesLoading(true);
         try {
@@ -98,10 +113,20 @@ export default function ManajemenMisiPage() {
         } finally {
             setSchedulesLoading(false);
         }
-    }, [user?.id]);
+    }, [user?.id, isDemoMode]);
 
     async function handleApprove(teamId: string) {
         setApprovingTeamId(teamId);
+
+        if (isDemoMode) {
+            setTimeout(() => {
+                setSchedules(prev => prev.map(s => s.team_id === teamId ? { ...s, teacher_approved: true, approved_at: new Date().toISOString() } : s));
+                toast.success("Jadwal berhasil disetujui! Misi 4 terbuka untuk tim ini (Demo).");
+                setApprovingTeamId(null);
+            }, 500);
+            return;
+        }
+
         try {
             const res = await fetch(`/api/mission3/${teamId}/approve`, { method: "POST" });
             const result = await res.json();
@@ -121,6 +146,34 @@ export default function ManajemenMisiPage() {
 
     const fetchMissionData = useCallback(async (missionNum: string) => {
         setLoading(true);
+
+        if (isDemoMode) {
+            setTimeout(() => {
+                let mockData: Partial<MissionSubmission>[] = [];
+                if (missionNum === "1") {
+                    mockData = [
+                        { id: "1", users: { full_name: "Andi Pratama" }, classes: { name: "Kelas 5A (Demo)" }, case_topic: "sampah", perspective_env: "Banyak sampah di sungai menghambat aliran air.", perspective_soc: "Warga tidak nyaman dengan bau menyengat." },
+                        { id: "2", users: { full_name: "Citra Dewi" }, classes: { name: "Kelas 5A (Demo)" }, case_topic: "kendaraan", perspective_env: "Polusi udara meningkat.", perspective_soc: "Penyakit pernapasan pada lansia meningkat." },
+                    ];
+                } else if (missionNum === "2") {
+                    mockData = [
+                        { id: "1", teams: { name: "Penyelamat Bumi", classes: { name: "Kelas 5A (Demo)" } }, action_name: "Kerja Bakti Masal", solution: "Membersihkan sampah", action_type: "karya" }
+                    ];
+                } else if (missionNum === "3") {
+                    mockData = [
+                        { id: "1", teams: { name: "Penyelamat Bumi", classes: { name: "Kelas 5A (Demo)" } }, mission3_tasks: [{ id: "t1", title: "Siapkan alat", status: "selesai" }, { id: "t2", title: "Kerja bakti", status: "pending" }] }
+                    ];
+                } else if (missionNum === "4") {
+                    mockData = [
+                        { id: "1", team_name: "Penyelamat Bumi", class_name: "Kelas 5A (Demo)", files: [{ cloudinary_url: "/assets/komik_1/Sampah1.png", media_type: "foto" }] }
+                    ];
+                }
+                setData(mockData as unknown as MissionSubmission[]);
+                setLoading(false);
+            }, 500);
+            return;
+        }
+
         try {
             const res = await fetch(`/api/guru/submissions/${missionNum}?teacher_id=${user?.id}`);
             const result = await res.json();
@@ -134,12 +187,14 @@ export default function ManajemenMisiPage() {
         } finally {
             setLoading(false);
         }
-    }, [user?.id]);
+    }, [user?.id, isDemoMode]);
 
     useEffect(() => {
-        if (user?.id) fetchMissionData(activeTab);
-        if (user?.id && activeTab === "3") fetchSchedules();
-    }, [user?.id, activeTab, fetchMissionData, fetchSchedules]);
+        if (user?.id || isDemoMode) {
+            fetchMissionData(activeTab);
+            if (activeTab === "3") fetchSchedules();
+        }
+    }, [user?.id, activeTab, fetchMissionData, fetchSchedules, isDemoMode]);
 
     const exportToExcel = async () => {
         if (data.length === 0) {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { DEMO_GURU_TEAMS } from "@/lib/demo/mockData";
 import { 
     UsersRound, 
     Target, 
@@ -38,7 +39,17 @@ export default function ManajemenTimPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
 
+    const isDemoMode = typeof window !== "undefined"
+        ? localStorage.getItem("eco_guru_demo_mode") === "true"
+        : false;
+
     const fetchTeams = useCallback(async () => {
+        if (isDemoMode) {
+            setTeams(DEMO_GURU_TEAMS);
+            setLoading(false);
+            return;
+        }
+
         try {
             const res = await fetch(`/api/guru/teams?teacher_id=${user?.id}`);
             const result = await res.json();
@@ -48,7 +59,7 @@ export default function ManajemenTimPage() {
         } finally {
             setLoading(false);
         }
-    }, [user?.id]);
+    }, [user?.id, isDemoMode]);
 
     useEffect(() => {
         if (user?.id) fetchTeams();

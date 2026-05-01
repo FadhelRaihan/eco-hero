@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Users, CheckCircle, School, Target, ArrowRight, ClipboardCheck } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { DEMO_GURU_CLASS, DEMO_GURU_STATS, DEMO_GURU_USER } from "@/lib/demo/mockData";
 
 interface Kelas {
     id: string;
@@ -20,8 +21,19 @@ export default function DashboardGuruPage() {
     const [completedMissions, setCompletedMissions] = useState(0);
     const [loading, setLoading] = useState(true);
 
+    const isDemoMode = typeof window !== "undefined"
+        ? localStorage.getItem("eco_guru_demo_mode") === "true"
+        : false;
+
     useEffect(() => {
         async function fetchMyClass() {
+            if (isDemoMode) {
+                setMyClass(DEMO_GURU_CLASS);
+                setCompletedMissions(DEMO_GURU_STATS.completed_missions);
+                setLoading(false);
+                return;
+            }
+
             try {
                 // Guru hanya mengambil kelas miliknya sendiri
                 const res = await fetch(`/api/classes?teacher_id=${user?.id}`);
@@ -48,7 +60,7 @@ export default function DashboardGuruPage() {
 
         if (user?.id) fetchMyClass();
         else setLoading(false);
-    }, [user?.id]);
+    }, [user?.id, isDemoMode]);
 
     if (loading) {
         return (
@@ -71,7 +83,7 @@ export default function DashboardGuruPage() {
                     </div>
                     
                     <h1 className="text-4xl font-black text-[#333333] mb-4">
-                        Halo, {user?.full_name}
+                        Halo, {isDemoMode ? DEMO_GURU_USER.full_name : user?.full_name}
                     </h1>
                     <p className="text-lg text-[#333333]/60 max-w-2xl font-medium leading-relaxed">
                         Selamat datang kembali! Mari pantau perkembangan <span className="text-[#1A5C0A] font-bold">{myClass?.name || "Kelas Anda"}</span> dan dukung mereka menjadi Pahlawan Lingkungan sejati.

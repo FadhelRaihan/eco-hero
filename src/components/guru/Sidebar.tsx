@@ -84,7 +84,7 @@ export default function TeacherSidebar({ isOpen, onClose }: SidebarProps) {
 
             {/* Sidebar Container */}
             <div className={cn(
-                "w-64 h-[100dvh] bg-[#FFFDF1] border-r border-[#1A5C0A]/10 flex flex-col fixed left-0 top-0 z-[60] transition-transform duration-300 lg:translate-x-0 shadow-2xl lg:shadow-none",
+                "w-64 h-[100dvh] bg-[#FFFDF1] border-r border-[#1A5C0A]/10 flex flex-col fixed left-0 top-0 z-[60] lg:z-30 transition-transform duration-300 lg:translate-x-0 shadow-2xl lg:shadow-none",
                 isOpen ? "translate-x-0" : "-translate-x-full"
             )}>
                 {/* Logo & Close Button (Mobile) */}

@@ -47,7 +47,15 @@ export async function DELETE(
                 .in("team_id", teamIds);
         }
 
-        return NextResponse.json({ message: "Siswa berhasil dihapus dari kelas" });
+        // 4. Hapus data utama dari tabel users
+        const { error: userError } = await supabase
+            .from("users")
+            .delete()
+            .eq("id", studentId);
+
+        if (userError) throw userError;
+
+        return NextResponse.json({ message: "Siswa berhasil dihapus sepenuhnya" });
     } catch (err) {
         console.error("Error deleting student:", err);
         return NextResponse.json({ error: "Gagal menghapus siswa" }, { status: 500 });

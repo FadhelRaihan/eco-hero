@@ -1,5 +1,5 @@
-"use client";
 import { useState, useEffect, useCallback } from "react";
+import { DEMO_GURU_FORUM, DEMO_GURU_CLASS } from "@/lib/demo/mockData";
 
 export interface ForumPost {
     id: string;
@@ -17,7 +17,18 @@ export function useGuruForum(teacherId?: string) {
     const [loading, setLoading] = useState(true);
     const [classId, setClassId] = useState<string | null>(null);
 
+    const isDemoMode = typeof window !== "undefined"
+        ? localStorage.getItem("eco_guru_demo_mode") === "true"
+        : false;
+
     const fetchPosts = useCallback(async () => {
+        if (isDemoMode) {
+            setPosts(DEMO_GURU_FORUM as unknown as ForumPost[]);
+            setClassId(DEMO_GURU_CLASS.id);
+            setLoading(false);
+            return;
+        }
+
         if (!teacherId) return;
         setLoading(true);
         try {
@@ -32,7 +43,7 @@ export function useGuruForum(teacherId?: string) {
         } finally {
             setLoading(false);
         }
-    }, [teacherId]);
+    }, [teacherId, isDemoMode]);
 
     useEffect(() => {
         fetchPosts();

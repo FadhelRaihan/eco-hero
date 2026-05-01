@@ -27,7 +27,20 @@ export default function TeacherSettingsPage() {
         confirmPassword: ""
     });
 
+    const isDemoMode = typeof window !== "undefined"
+        ? localStorage.getItem("eco_guru_demo_mode") === "true"
+        : false;
+
     useEffect(() => {
+        if (isDemoMode) {
+            setFormData(prev => ({
+                ...prev,
+                full_name: "Bapak/Ibu Guru (Demo)",
+                username: "guru_demo",
+            }));
+            return;
+        }
+
         if (user?.id) {
             fetch(`/api/guru/profile?user_id=${user.id}`)
                 .then(res => res.json())
@@ -54,11 +67,22 @@ export default function TeacherSettingsPage() {
                     }));
                 });
         }
-    }, [user]);
+    }, [user, isDemoMode]);
 
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+
+        if (isDemoMode) {
+            setTimeout(() => {
+                toast.success("Profil diperbarui (Demo)", {
+                    description: "Nama Anda telah berhasil diperbarui di memori browser."
+                });
+                setLoading(false);
+            }, 500);
+            return;
+        }
+
         try {
             const res = await fetch("/api/guru/profile", {
                 method: "PUT",
@@ -93,6 +117,18 @@ export default function TeacherSettingsPage() {
         }
 
         setLoading(true);
+
+        if (isDemoMode) {
+            setTimeout(() => {
+                toast.success("Password diperbarui (Demo)", {
+                    description: "Password demo Anda telah diubah di memori browser."
+                });
+                setFormData(prev => ({ ...prev, currentPassword: "", newPassword: "", confirmPassword: "" }));
+                setLoading(false);
+            }, 500);
+            return;
+        }
+
         try {
             const res = await fetch("/api/auth/change-password", {
                 method: "POST",

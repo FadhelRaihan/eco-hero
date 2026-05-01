@@ -13,6 +13,7 @@
 
 import type { BrainstormingData, TeamData } from "@/hooks/useMission2";
 import type { CaseTopic } from "@/lib/mission-data";
+import { TestSubmission } from "@/types/database";
 
 // ─── DEMO USER ────────────────────────────────────────────────
 export const DEMO_USER = {
@@ -171,7 +172,7 @@ export const DEMO_MISSION4 = {
     teamRole: "ketua" as "ketua" | "anggota" | "belum_pilih",
     myTeam: DEMO_TEAM,
     // Kosong: user harus upload file sendiri (upload ke Cloudinary, tidak ke DB)
-    submissions: [] as any[],
+    submissions: [] as TestSubmission[],
     // Reflection kosong: user harus isi sendiri
     reflection: null,
     loading: false,
@@ -212,4 +213,214 @@ export const DEMO_TEST_QUESTIONS = [
         ],
         correct_answer: 1,
     },
+];
+
+// ─── DEMO GURU (TEACHER DASHBOARD) ────────────────────────────
+export const DEMO_GURU_USER = {
+    id: "demo-guru-001",
+    full_name: "Bapak/Ibu Guru (Demo)",
+    role: "guru" as const,
+    email: "guru-demo@ecohero.id",
+};
+
+export const DEMO_GURU_CLASS = {
+    id: "demo-class-001",
+    name: "Kelas 5A (Demo)",
+    teacher_id: "demo-guru-001",
+    member_count: 32,
+    team_count: 8,
+};
+
+export const DEMO_GURU_STATS = {
+    completed_missions: 114,
+};
+
+export const DEMO_GURU_STUDENTS = [
+    {
+        student_id: "demo-student-001",
+        full_name: "Andi Pratama",
+        team_role: "Leader",
+        class_id: "demo-class-001",
+        class_name: "Kelas 5A (Demo)",
+        team_id: "demo-team-001",
+        team_name: "Penyelamat Bumi",
+        missions: [
+            { mission_number: 1, status: "completed", badge_earned: true },
+            { mission_number: 2, status: "completed", badge_earned: true },
+            { mission_number: 3, status: "in_progress", badge_earned: false },
+            { mission_number: 4, status: "locked", badge_earned: false },
+        ]
+    },
+    {
+        student_id: "demo-student-002",
+        full_name: "Budi Santoso",
+        team_role: "Member",
+        class_id: "demo-class-001",
+        class_name: "Kelas 5A (Demo)",
+        team_id: "demo-team-001",
+        team_name: "Penyelamat Bumi",
+        missions: [
+            { mission_number: 1, status: "completed", badge_earned: true },
+            { mission_number: 2, status: "completed", badge_earned: true },
+            { mission_number: 3, status: "in_progress", badge_earned: false },
+            { mission_number: 4, status: "locked", badge_earned: false },
+        ]
+    },
+    {
+        student_id: "demo-student-003",
+        full_name: "Citra Dewi",
+        team_role: "Member",
+        class_id: "demo-class-001",
+        class_name: "Kelas 5A (Demo)",
+        team_id: "demo-team-002",
+        team_name: "Pasukan Hijau",
+        missions: [
+            { mission_number: 1, status: "completed", badge_earned: true },
+            { mission_number: 2, status: "in_progress", badge_earned: false },
+            { mission_number: 3, status: "locked", badge_earned: false },
+            { mission_number: 4, status: "locked", badge_earned: false },
+        ]
+    },
+    {
+        student_id: "demo-student-004",
+        full_name: "Dian Pertiwi",
+        team_role: "Leader",
+        class_id: "demo-class-001",
+        class_name: "Kelas 5A (Demo)",
+        team_id: "demo-team-002",
+        team_name: "Pasukan Hijau",
+        missions: [
+            { mission_number: 1, status: "completed", badge_earned: true },
+            { mission_number: 2, status: "in_progress", badge_earned: false },
+            { mission_number: 3, status: "locked", badge_earned: false },
+            { mission_number: 4, status: "locked", badge_earned: false },
+        ]
+    }
+];
+
+export const DEMO_GURU_TEAMS = [
+    {
+        id: "demo-team-001",
+        name: "Penyelamat Bumi",
+        selected_case: "sampah",
+        member_count: 2,
+        members: [
+            { full_name: "Andi Pratama", role: "Leader" },
+            { full_name: "Budi Santoso", role: "Member" }
+        ]
+    },
+    {
+        id: "demo-team-002",
+        name: "Pasukan Hijau",
+        selected_case: "kendaraan",
+        member_count: 2,
+        members: [
+            { full_name: "Dian Pertiwi", role: "Leader" },
+            { full_name: "Citra Dewi", role: "Member" }
+        ]
+    }
+];
+
+export const DEMO_GURU_FORUM = [
+    {
+        id: "post-demo-1",
+        student_id: "demo-student-002",
+        case_topic: "sampah",
+        perspective_env: "Sampah plastik yang menumpuk di sungai menyebabkan banjir dan mematikan ekosistem air.",
+        perspective_soc: "Warga sekitar kesulitan mencari ikan karena sungai tercemar, pendapatan nelayan turun drastis.",
+        users: { id: "demo-student-002", full_name: "Budi Santoso" },
+        created_at: new Date(Date.now() - 3600000).toISOString(),
+    },
+    {
+        id: "post-demo-2",
+        student_id: "demo-student-003",
+        case_topic: "kendaraan",
+        perspective_env: "Polusi udara dari kendaraan berbahan bakar fosil meningkatkan suhu kota dan merusak lapisan ozon.",
+        perspective_soc: "Biaya kesehatan warga meningkat akibat penyakit pernapasan yang disebabkan polusi kendaraan.",
+        users: { id: "demo-student-003", full_name: "Citra Dewi" },
+        created_at: new Date(Date.now() - 7200000).toISOString(),
+    },
+    {
+        id: "post-demo-3",
+        student_id: "demo-student-004",
+        case_topic: "sampah",
+        perspective_env: "Banyak sampah organik yang sebenarnya bisa dijadikan kompos alih-alih dibuang.",
+        perspective_soc: "Masyarakat bisa menjual kompos tersebut untuk tambahan kas RT.",
+        users: { id: "demo-student-004", full_name: "Dian Pertiwi" },
+        created_at: new Date(Date.now() - 14400000).toISOString(),
+    }
+];
+
+export const DEMO_GURU_GALLERY = [
+    {
+        id: "gallery-demo-1",
+        team_id: "demo-team-001",
+        team_name: "Tim Hijau Bersama",
+        selected_case: "sampah",
+        cloudinary_url: "/assets/komik_1/Sampah1.png",
+        media_type: "foto",
+        caption: "Aksi bersih-bersih sungai Cikapundung! Kami berhasil mengumpulkan 15 kantong besar sampah plastik.",
+        uploaded_at: new Date(Date.now() - 86400000).toISOString(),
+        like_count: 12,
+        comment_count: 4,
+        is_liked: false
+    },
+    {
+        id: "gallery-demo-2",
+        team_id: "demo-team-002",
+        team_name: "Pasukan Langit Biru",
+        selected_case: "kendaraan",
+        cloudinary_url: "/assets/komik_2/kendaraan/Kendaraan1.jpeg",
+        media_type: "foto",
+        caption: "Sosialisasi ke warga sekitar tentang dampak emisi gas buang kendaraan pribadi.",
+        uploaded_at: new Date(Date.now() - 172800000).toISOString(),
+        like_count: 24,
+        comment_count: 8,
+        is_liked: false
+    }
+];
+
+export const DEMO_GURU_TEST_RESULTS = [
+    {
+        id: "test-demo-1",
+        student_name: "Andi Pratama",
+        class_name: "Kelas 5A (Demo)",
+        type: "pretest" as const,
+        score: 60,
+        date: new Date(Date.now() - 604800000).toISOString(),
+        answers: { "q1": "A", "q2": "B", "q3": "A" },
+        questions: [
+            { id: "q1", question_text: "Apa itu daur ulang?", options: ["A. Mengolah kembali", "B. Membuang sampah"], correct_answer: "A" },
+            { id: "q2", question_text: "Apa dampak polusi udara?", options: ["A. Sehat", "B. Sesak napas"], correct_answer: "B" },
+            { id: "q3", question_text: "Mana yang termasuk sampah organik?", options: ["A. Sisa makanan", "B. Botol kaca"], correct_answer: "A" }
+        ]
+    },
+    {
+        id: "test-demo-2",
+        student_name: "Andi Pratama",
+        class_name: "Kelas 5A (Demo)",
+        type: "posttest" as const,
+        score: 100,
+        date: new Date(Date.now() - 86400000).toISOString(),
+        answers: { "q1": "A", "q2": "B", "q3": "A" },
+        questions: [
+            { id: "q1", question_text: "Apa itu daur ulang?", options: ["A. Mengolah kembali", "B. Membuang sampah"], correct_answer: "A" },
+            { id: "q2", question_text: "Apa dampak polusi udara?", options: ["A. Sehat", "B. Sesak napas"], correct_answer: "B" },
+            { id: "q3", question_text: "Mana yang termasuk sampah organik?", options: ["A. Sisa makanan", "B. Botol kaca"], correct_answer: "A" }
+        ]
+    },
+    {
+        id: "test-demo-3",
+        student_name: "Budi Santoso",
+        class_name: "Kelas 5A (Demo)",
+        type: "pretest" as const,
+        score: 80,
+        date: new Date(Date.now() - 604800000).toISOString(),
+        answers: { "q1": "A", "q2": "B", "q3": "B" },
+        questions: [
+            { id: "q1", question_text: "Apa itu daur ulang?", options: ["A. Mengolah kembali", "B. Membuang sampah"], correct_answer: "A" },
+            { id: "q2", question_text: "Apa dampak polusi udara?", options: ["A. Sehat", "B. Sesak napas"], correct_answer: "B" },
+            { id: "q3", question_text: "Mana yang termasuk sampah organik?", options: ["A. Sisa makanan", "B. Botol kaca"], correct_answer: "A" }
+        ]
+    }
 ];

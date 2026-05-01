@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { DEMO_GURU_STUDENTS, DEMO_GURU_CLASS } from "@/lib/demo/mockData";
 import { useAuth } from "@/hooks/useAuth";
 import {
     Users,
@@ -150,7 +151,18 @@ export default function ManajemenSiswaPage() {
     const [editName, setEditName] = useState("");
     const [deleting, setDeleting] = useState(false);
 
+    const isDemoMode = typeof window !== "undefined"
+        ? localStorage.getItem("eco_guru_demo_mode") === "true"
+        : false;
+
     const fetchStudents = useCallback(async () => {
+        if (isDemoMode) {
+            setStudents(DEMO_GURU_STUDENTS as unknown as StudentProgress[]);
+            setClassName(DEMO_GURU_CLASS.name);
+            setLoading(false);
+            return;
+        }
+
         try {
             const res = await fetch(`/api/guru/students?teacher_id=${user?.id}`);
             const result = await res.json();
@@ -163,7 +175,7 @@ export default function ManajemenSiswaPage() {
         } finally {
             setLoading(false);
         }
-    }, [user?.id]);
+    }, [user?.id, isDemoMode]);
 
     useEffect(() => {
         if (user?.id) {
@@ -175,6 +187,32 @@ export default function ManajemenSiswaPage() {
         e.preventDefault();
         if (!user?.id) return;
         setFormLoading(true);
+
+        if (isDemoMode) {
+            setTimeout(() => {
+                const newStudentData = {
+                    student_id: `demo-student-${Date.now()}`,
+                    full_name: newStudent.full_name,
+                    team_role: "-",
+                    class_id: DEMO_GURU_CLASS.id,
+                    class_name: DEMO_GURU_CLASS.name,
+                    team_name: "-",
+                    missions: [
+                        { mission_number: 1, status: "locked", badge_earned: false },
+                        { mission_number: 2, status: "locked", badge_earned: false },
+                        { mission_number: 3, status: "locked", badge_earned: false },
+                        { mission_number: 4, status: "locked", badge_earned: false },
+                    ]
+                };
+                setStudents(prev => [...prev, newStudentData as unknown as StudentProgress]);
+                toast.success("Siswa berhasil ditambahkan (Demo)");
+                setIsAddDialogOpen(false);
+                setNewStudent({ full_name: "" });
+                setFormLoading(false);
+            }, 500);
+            return;
+        }
+
         try {
             const res = await fetch("/api/guru/students", {
                 method: "POST",
@@ -201,6 +239,17 @@ export default function ManajemenSiswaPage() {
         e.preventDefault();
         if (!editingStudent) return;
         setFormLoading(true);
+
+        if (isDemoMode) {
+            setTimeout(() => {
+                setStudents(prev => prev.map(s => s.student_id === editingStudent.student_id ? { ...s, full_name: editName } : s));
+                toast.success("Nama siswa berhasil diperbarui (Demo)");
+                setIsEditDialogOpen(false);
+                setFormLoading(false);
+            }, 500);
+            return;
+        }
+
         try {
             const res = await fetch(`/api/guru/students/${editingStudent.student_id}`, {
                 method: "PATCH",
@@ -225,6 +274,17 @@ export default function ManajemenSiswaPage() {
     const handleDeleteStudent = async () => {
         if (!studentToDelete) return;
         setDeleting(true);
+
+        if (isDemoMode) {
+            setTimeout(() => {
+                setStudents(prev => prev.filter(s => s.student_id !== studentToDelete.student_id));
+                toast.success("Siswa berhasil dihapus (Demo)");
+                setStudentToDelete(null);
+                setDeleting(false);
+            }, 500);
+            return;
+        }
+
         try {
             const res = await fetch(`/api/guru/students/${studentToDelete.student_id}?class_id=${studentToDelete.class_id}`, {
                 method: "DELETE",
@@ -250,6 +310,43 @@ export default function ManajemenSiswaPage() {
         setLoadingDrawer(true);
         setSubmissionDetail(null);
 
+        if (isDemoMode) {
+            setTimeout(() => {
+                if (missionNumber === 1) {
+                    setSubmissionDetail({
+                        case_topic: "sampah",
+                        perspective_env: "Ini contoh jawaban perspektif lingkungan dari siswa.",
+                        perspective_soc: "Ini contoh jawaban perspektif sosial dari siswa.",
+                        created_at: new Date().toISOString()
+                    });
+                } else if (missionNumber === 2) {
+                    setSubmissionDetail({
+                        env_problem: "Banyak sampah berserakan di sekitar sekolah.",
+                        social_problem: "Siswa merasa terganggu dengan bau sampah.",
+                        solution: "Membuat tempat sampah organik dan anorganik serta jadwal piket ketat.",
+                        solution_reason: "Agar sampah terpilah dan lingkungan kembali nyaman.",
+                        action_type: "karya",
+                        action_name: "Program Pilah Sampah Ceria",
+                        materials: "Tempat sampah, stiker, sarung tangan.",
+                        target_audience: "Seluruh siswa kelas 5."
+                    });
+                } else if (missionNumber === 3) {
+                    setSubmissionDetail({
+                        tasks: [
+                            { id: "1", title: "Menyiapkan alat kebersihan", scheduled_date: new Date().toISOString(), status: "completed", user: { full_name: "Andi Pratama" } },
+                            { id: "2", title: "Melaksanakan sosialisasi", scheduled_date: new Date(Date.now() + 86400000).toISOString(), status: "pending", user: { full_name: "Budi Santoso" } }
+                        ]
+                    });
+                } else {
+                    setSubmissionDetail({
+                        files: []
+                    });
+                }
+                setLoadingDrawer(false);
+            }, 500);
+            return;
+        }
+
         try {
             const res = await fetch(`/api/guru/submissions/${missionNumber}/${student.student_id}`);
             const result = await res.json();
@@ -271,6 +368,22 @@ export default function ManajemenSiswaPage() {
         setDrawerType('TEAM');
         setLoadingDrawer(true);
         setTeamDetail(null);
+
+        if (isDemoMode) {
+            setTimeout(() => {
+                setTeamDetail({
+                    id: "demo-team-001",
+                    name: student.team_name || "Tim Demo",
+                    selected_case: "sampah",
+                    team_members: [
+                        { student_id: "mem-1", users: { full_name: student.full_name } },
+                        { student_id: "mem-2", users: { full_name: "Rekan Tim 1" } }
+                    ]
+                });
+                setLoadingDrawer(false);
+            }, 500);
+            return;
+        }
 
         try {
             const res = await fetch(`/api/guru/teams/${student.team_id}`);

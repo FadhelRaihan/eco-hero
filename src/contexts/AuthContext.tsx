@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { DEMO_AUTH_USER } from "@/contexts/DemoContext";
+import { DEMO_GURU_USER } from "@/lib/demo/mockData";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface AuthUser {
@@ -49,13 +50,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const initializeAuth = () => {
-            const demo = localStorage.getItem("eco_demo_mode") === "true";
+            const demoSiswa = localStorage.getItem("eco_demo_mode") === "true";
+            const demoGuru = localStorage.getItem("eco_guru_demo_mode") === "true";
             const siswaSession = getCookie("siswa_session");
             const guruSession = getCookie("guru_session");
 
             let initialUser: AuthUser | null = null;
 
-            if (demo) {
+            if (demoGuru) {
+                initialUser = DEMO_GURU_USER as AuthUser;
+            } else if (demoSiswa) {
                 initialUser = DEMO_AUTH_USER as AuthUser;
             } else if (siswaSession) {
                 try {
@@ -71,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
             }
 
-            setIsDemoMode(demo);
+            setIsDemoMode(demoSiswa || demoGuru);
             setUser(initialUser);
             setLoading(false);
         };
@@ -81,14 +85,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const logout = useCallback(async () => {
-        const demo = localStorage.getItem("eco_demo_mode") === "true";
+        const demoSiswa = localStorage.getItem("eco_demo_mode") === "true";
+        const demoGuru = localStorage.getItem("eco_guru_demo_mode") === "true";
 
-        if (demo) {
+        if (demoSiswa || demoGuru) {
             localStorage.removeItem("eco_demo_mode");
+            localStorage.removeItem("eco_guru_demo_mode");
             document.cookie = "eco_demo_mode=; path=/; max-age=0";
+            document.cookie = "eco_guru_demo_mode=; path=/; max-age=0";
             setUser(null);
             setIsDemoMode(false);
-            router.push("/login/siswa");
+            router.push(demoGuru ? "/login/guru" : "/login/siswa");
             return;
         }
 
@@ -104,10 +111,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(newUser);
         setLoading(false);
         // Sync isDemoMode dari localStorage (sudah di-set sebelum loginUser dipanggil)
-        const demo = typeof window !== "undefined"
+        const demoSiswa = typeof window !== "undefined"
             ? localStorage.getItem("eco_demo_mode") === "true"
             : false;
-        setIsDemoMode(demo);
+        const demoGuru = typeof window !== "undefined"
+            ? localStorage.getItem("eco_guru_demo_mode") === "true"
+            : false;
+        setIsDemoMode(demoSiswa || demoGuru);
     }, []);
 
     return (
