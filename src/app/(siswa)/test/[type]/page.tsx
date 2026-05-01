@@ -244,8 +244,8 @@ export default function TestPage() {
             </div>
 
             {/* Question Area */}
-            <div className="flex-1 overflow-y-auto p-6 flex flex-col items-center justify-center min-h-0">
-                <div className="w-full max-w-2xl bg-white rounded-3xl border-2 border-[#1A5C0A]/10 p-8 shadow-sm">
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col items-center min-h-0">
+                <div className="w-full max-w-2xl bg-white rounded-3xl border-2 border-[#1A5C0A]/10 p-6 md:p-8 shadow-sm mt-0 md:my-auto shrink-0">
                     <h2 className="text-lg font-bold text-[#333333] mb-8 leading-relaxed">
                         {currentQuestion.question_text}
                     </h2>
