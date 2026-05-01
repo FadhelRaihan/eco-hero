@@ -110,10 +110,6 @@ export default function Step4Forum({
 
     async function handleSend() {
         if (!input.trim() || hasPosted) return;
-        if (input.trim().length < 10) {
-            setError("Pendapat minimal 10 karakter");
-            return;
-        }
 
         setError("");
         const result = await onSubmitPost({

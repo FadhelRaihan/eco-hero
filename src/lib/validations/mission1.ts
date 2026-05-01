@@ -5,28 +5,16 @@ export const forumPostSchema = z.object({
         ["sampah", "kendaraan"],
         { message: "Pilih topik kasus terlebih dahulu" }
     ),
-    perspective_env: z
-        .string()
-        .min(10, "Sudut pandang lingkungan minimal 10 karakter")
-        .max(1000, "Terlalu panjang"),
-    perspective_soc: z
-        .string()
-        .min(10, "Sudut pandang sosial minimal 10 karakter")
-        .max(1000, "Terlalu panjang"),
+    perspective_env: z.string().min(1, "Pendapat wajib diisi"),
+    perspective_soc: z.string().optional(),
 });
 
 export const forumCommentSchema = z.object({
-    content: z
-        .string()
-        .min(5, "Komentar minimal 5 karakter")
-        .max(500, "Komentar maksimal 500 karakter"),
+    content: z.string().min(1, "Komentar wajib diisi"),
 });
 
 export const questionAnswerSchema = z.object({
-    answer: z
-        .string()
-        .min(10, "Jawaban minimal 10 karakter")
-        .max(1000, "Jawaban terlalu panjang"),
+    answer: z.string().min(1, "Jawaban wajib diisi"),
 });
 
 export type ForumPostInput = z.infer<typeof forumPostSchema>;

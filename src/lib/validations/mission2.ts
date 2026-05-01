@@ -10,14 +10,14 @@ export const createTeamSchema = z.object({
 });
 
 export const brainstormingSchema = z.object({
-    env_problem: z.string().min(10, "Minimal 10 karakter"),
-    social_problem: z.string().min(10, "Minimal 10 karakter"),
-    solution: z.string().min(10, "Minimal 10 karakter"),
-    solution_reason: z.string().min(10, "Minimal 10 karakter"),
-    action_type: z.string().min(3, "Minimal 3 karakter"),
-    action_name: z.string().min(2, "Minimal 2 karakter"),
-    materials: z.string().min(5, "Minimal 5 karakter"),
-    target_audience: z.string().min(3, "Minimal 3 karakter"),
+    env_problem: z.string().min(1, "Wajib diisi"),
+    social_problem: z.string().min(1, "Wajib diisi"),
+    solution: z.string().min(1, "Wajib diisi"),
+    solution_reason: z.string().min(1, "Wajib diisi"),
+    action_type: z.string().min(1, "Wajib diisi"),
+    action_name: z.string().min(1, "Wajib diisi"),
+    materials: z.string().min(1, "Wajib diisi"),
+    target_audience: z.string().min(1, "Wajib diisi"),
 });
 
 export type CreateTeamInput = z.infer<typeof createTeamSchema>;
