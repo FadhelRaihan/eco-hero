@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
         const { data: test } = await supabase
             .from("tests")
             .select("id")
-            .eq("class_id", member.class_id)
+            .is("class_id", null)
             .eq("type", type)
             .eq("is_active", true)
             .single();
@@ -38,10 +38,16 @@ export async function POST(request: NextRequest) {
         if (!questions) throw new Error("No questions found for this test");
 
         let correctCount = 0;
+        const mappedAnswers: Record<string, string> = {};
+
         questions.forEach(q => {
-            if (answers[q.id] === q.correct_answer) {
+            // Evaluasi jawaban (bandingkan index integer)
+            if (String(answers[q.id]) === String(q.correct_answer)) {
                 correctCount++;
             }
+            // Konversi ke format huruf (A, B, C, D) untuk disimpan ke database
+            const ansIndex = parseInt(answers[q.id]);
+            mappedAnswers[q.id] = ansIndex === 0 ? "A" : ansIndex === 1 ? "B" : ansIndex === 2 ? "C" : "D";
         });
         const score = (correctCount / questions.length) * 100;
 
@@ -51,7 +57,7 @@ export async function POST(request: NextRequest) {
             .insert({
                 test_id: test.id,
                 student_id,
-                answers,
+                answers: mappedAnswers,
                 score
             });
 
@@ -77,8 +83,9 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json({ success: true, score });
-    } catch (error: any) {
-        console.error("POST /api/tests/submit error:", error);
-        return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+    } catch (error) {
+        const err = error as Error;
+        console.error("POST /api/tests/submit error:", err);
+        return NextResponse.json({ error: err.message || "Internal Server Error" }, { status: 500 });
     }
 }

@@ -3,16 +3,9 @@
 import { useState, useEffect } from "react";
 
 import { useAuth } from "@/hooks/useAuth";
-import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
-    Home,
-    Map,
-    Image,
-    Award,
     LogOut,
-    LayoutDashboard,
-    School,
     ArrowLeft,
     Crown,
     FlaskConical,
@@ -27,21 +20,8 @@ interface NavbarProps {
     textColor?: string;
 }
 
-const SISWA_NAV = [
-    { href: "/dashboard", label: "Beranda", icon: Home },
-    { href: "/misi/1", label: "Misi", icon: Map },
-    { href: "/galeri", label: "Galeri", icon: Image },
-    { href: "/dashboard#lencana", label: "Lencana", icon: Award },
-];
-
-const GURU_NAV = [
-    { href: "/guru/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/guru/kelas", label: "Kelas", icon: School },
-];
-
-export default function Navbar({ role, backUrl, title, variant = "default", bgBtn, textColor }: NavbarProps) {
+export default function Navbar({ backUrl, title, variant = "default", bgBtn, textColor }: NavbarProps) {
     const { user, logout, isDemoMode: isDemoModeAuth } = useAuth();
-    const pathname = usePathname();
     const [isDemoMode, setIsDemoMode] = useState(false);
 
     useEffect(() => {

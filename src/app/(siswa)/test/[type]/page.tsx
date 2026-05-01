@@ -38,7 +38,7 @@ export default function TestPage() {
 
         // ── DEMO MODE ──────────────────────────────────────────
         if (isDemoMode) {
-            setQuestions(DEMO_TEST_QUESTIONS as any);
+            setQuestions(DEMO_TEST_QUESTIONS as unknown as Question[]);
             setLoading(false);
             return;
         }
@@ -51,26 +51,6 @@ export default function TestPage() {
                 
                 if (res.ok && result.data?.questions) {
                     setQuestions(result.data.questions);
-                } else {
-                    setQuestions([
-                        {
-                            id: "q1",
-                            question_text: "Apa yang dimaksud dengan ekosistem?",
-                            options: [
-                                "Hubungan timbal balik antara makhluk hidup dengan lingkungannya",
-                                "Kumpulan hewan di hutan",
-                                "Tempat tinggal manusia",
-                                "Proses fotosintesis tumbuhan"
-                            ],
-                            correct_answer: 0
-                        },
-                        {
-                            id: "q2",
-                            question_text: "Manakah yang merupakan sampah anorganik?",
-                            options: ["Daun kering", "Sisa makanan", "Botol plastik", "Kulit buah"],
-                            correct_answer: 2
-                        }
-                    ]);
                 }
             } catch (err) {
                 console.error("Fetch test error:", err);
@@ -118,7 +98,7 @@ export default function TestPage() {
             if (isDemoMode) {
                 await new Promise((r) => setTimeout(r, 900));
                 // Hitung skor berdasarkan jawaban mock
-                const correct = (questions as any[]).filter((q) => {
+                const correct = (questions as Question[]).filter((q) => {
                     const studentAns = answers[q.id];
                     return String(studentAns) === String(q.correct_answer);
                 }).length;
@@ -151,7 +131,7 @@ export default function TestPage() {
                 const data = await res.json();
                 setError(data.error || "Gagal mengirim jawaban.");
             }
-        } catch (err) {
+        } catch {
             setError("Terjadi kesalahan koneksi.");
         } finally {
             setSubmitting(false);

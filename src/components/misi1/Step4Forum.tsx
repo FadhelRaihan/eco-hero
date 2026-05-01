@@ -56,7 +56,15 @@ interface Step4ForumProps {
     classId: string;
     studentId: string;
     selectedTopic: CaseTopic;
-    posts: any[];
+    posts: {
+        id: string;
+        student_id: string;
+        case_topic: string;
+        perspective_env: string;
+        perspective_soc: string;
+        created_at: string;
+        users: { full_name: string };
+    }[];
     loadingPosts: boolean;
     hasPosted: boolean;
     submitting: boolean;
@@ -108,13 +116,10 @@ export default function Step4Forum({
         }
 
         setError("");
-        const midpoint = Math.ceil(input.length / 2);
-        const part1 = input.slice(0, midpoint).trim();
-        const part2 = input.slice(midpoint).trim();
         const result = await onSubmitPost({
             case_topic: selectedTopic,
-            perspective_env: part1.length >= 10 ? part1 : input,
-            perspective_soc: part2.length >= 10 ? part2 : input,
+            perspective_env: input.trim(),
+            perspective_soc: "",
         });
 
         if (!result.success) {

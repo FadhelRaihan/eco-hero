@@ -15,11 +15,12 @@ import { DEMO_AUTH_USER } from "@/contexts/DemoContext";
 export interface AuthUser {
     id: string;
     full_name: string;
+    username: string;
     email?: string;
-    role: "guru" | "siswa";
+    role: "guru" | "siswa" | "admin";
     class_id?: string;
     class_name?: string;
-    user_metadata?: any;
+    user_metadata?: Record<string, unknown>;
 }
 
 interface AuthContextValue {
@@ -47,25 +48,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter();
 
     useEffect(() => {
-        const demo = localStorage.getItem("eco_demo_mode") === "true";
-        setIsDemoMode(demo);
+        const initializeAuth = () => {
+            const demo = localStorage.getItem("eco_demo_mode") === "true";
+            const siswaSession = getCookie("siswa_session");
+            const guruSession = getCookie("guru_session");
 
-        if (demo) {
-            setUser(DEMO_AUTH_USER as AuthUser);
+            let initialUser: AuthUser | null = null;
+
+            if (demo) {
+                initialUser = DEMO_AUTH_USER as AuthUser;
+            } else if (siswaSession) {
+                try {
+                    initialUser = JSON.parse(siswaSession);
+                } catch (e) {
+                    console.error("Failed to parse siswa session", e);
+                }
+            } else if (guruSession) {
+                try {
+                    initialUser = JSON.parse(guruSession);
+                } catch (e) {
+                    console.error("Failed to parse guru session", e);
+                }
+            }
+
+            setIsDemoMode(demo);
+            setUser(initialUser);
             setLoading(false);
-            return;
-        }
+        };
 
-        const siswaSession = getCookie("siswa_session");
-        const guruSession = getCookie("guru_session");
-
-        if (siswaSession) {
-            try { setUser(JSON.parse(siswaSession)); } catch {}
-        } else if (guruSession) {
-            try { setUser(JSON.parse(guruSession)); } catch {}
-        }
-
-        setLoading(false);
+        const timer = setTimeout(initializeAuth, 0);
+        return () => clearTimeout(timer);
     }, []);
 
     const logout = useCallback(async () => {

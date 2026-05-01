@@ -1,56 +1,92 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { 
-    Target, 
     CheckCircle, 
-    Clock, 
-    FileText, 
-    Image as ImageIcon, 
     Video as VideoIcon,
-    Users,
-    School,
     MessageSquare,
     Lightbulb,
     ClipboardList,
     Camera,
     Loader2,
-    ExternalLink,
     Download,
-    FileSpreadsheet,
     CalendarCheck,
     CalendarX,
-    ShieldCheck
+    ShieldCheck,
+    Clock
 } from "lucide-react";
+import Image from "next/image";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    Drawer,
+    DrawerContent,
+    DrawerHeader,
+    DrawerTitle,
+} from "@/components/ui/drawer";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
+
+interface Mission3Schedule {
+    id: string;
+    team_id: string;
+    teacher_approved: boolean;
+    submitted_at: string | null;
+    approved_at: string | null;
+    teams?: {
+        name: string;
+    };
+    mission3_tasks?: {
+        id: string;
+        title: string;
+    }[];
+}
+
+interface MissionFile {
+    cloudinary_url: string;
+    media_type: "foto" | "video" | "pdf";
+    caption?: string;
+}
+
+interface MissionSubmission {
+    id: string;
+    case_topic?: string;
+    perspective_env?: string;
+    perspective_soc?: string;
+    action_name?: string;
+    solution?: string;
+    action_type?: string;
+    users?: { full_name: string };
+    classes?: { name: string };
+    teams?: { 
+        name: string; 
+        classes?: { name: string };
+    };
+    mission3_tasks?: { id: string; title: string; status: string }[];
+    files?: MissionFile[];
+    // Misi 4 combined data structure
+    team_name?: string;
+    class_name?: string;
+}
 
 export default function ManajemenMisiPage() {
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("1");
-    const [data, setData] = useState<any[]>([]);
+    const [data, setData] = useState<MissionSubmission[]>([]);
+    const [selectedM4Submission, setSelectedM4Submission] = useState<MissionSubmission | null>(null);
 
     // ── Approval Jadwal Misi 3 ────────────────────────────────
-    const [schedules, setSchedules] = useState<any[]>([]);
+    const [schedules, setSchedules] = useState<Mission3Schedule[]>([]);
     const [schedulesLoading, setSchedulesLoading] = useState(false);
     const [approvingTeamId, setApprovingTeamId] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (user?.id) fetchMissionData(activeTab);
-        if (user?.id && activeTab === "3") fetchSchedules();
-    }, [user?.id, activeTab]);
-
-    async function fetchSchedules() {
+    const fetchSchedules = useCallback(async () => {
         if (!user?.id) return;
         setSchedulesLoading(true);
         try {
@@ -62,7 +98,7 @@ export default function ManajemenMisiPage() {
         } finally {
             setSchedulesLoading(false);
         }
-    }
+    }, [user?.id]);
 
     async function handleApprove(teamId: string) {
         setApprovingTeamId(teamId);
@@ -83,7 +119,7 @@ export default function ManajemenMisiPage() {
     }
     // ─────────────────────────────────────────────────────────
 
-    async function fetchMissionData(missionNum: string) {
+    const fetchMissionData = useCallback(async (missionNum: string) => {
         setLoading(true);
         try {
             const res = await fetch(`/api/guru/submissions/${missionNum}?teacher_id=${user?.id}`);
@@ -93,12 +129,17 @@ export default function ManajemenMisiPage() {
             } else {
                 toast.error("Gagal mengambil data misi");
             }
-        } catch (error) {
+        } catch {
             toast.error("Terjadi kesalahan");
         } finally {
             setLoading(false);
         }
-    }
+    }, [user?.id]);
+
+    useEffect(() => {
+        if (user?.id) fetchMissionData(activeTab);
+        if (user?.id && activeTab === "3") fetchSchedules();
+    }, [user?.id, activeTab, fetchMissionData, fetchSchedules]);
 
     const exportToExcel = async () => {
         if (data.length === 0) {
@@ -110,7 +151,7 @@ export default function ManajemenMisiPage() {
         const worksheet = workbook.addWorksheet(`Misi ${activeTab}`);
 
         // Define columns based on mission
-        let columns: any[] = [];
+        let columns: { header: string; key: string; width: number }[] = [];
         if (activeTab === "1") {
             columns = [
                 { header: "Nama Siswa", key: "full_name", width: 25 },
@@ -147,8 +188,8 @@ export default function ManajemenMisiPage() {
         worksheet.columns = columns;
 
         // Add rows
-        data.forEach((item) => {
-            let rowData: any = {};
+        data.forEach((item: MissionSubmission) => {
+            let rowData: Record<string, string | number | null | undefined> = {};
             if (activeTab === "1") {
                 rowData = {
                     full_name: item.users?.full_name,
@@ -167,7 +208,7 @@ export default function ManajemenMisiPage() {
                 };
             } else if (activeTab === "3") {
                 const tasks = item.mission3_tasks || [];
-                const completed = tasks.filter((t: any) => t.status === "selesai").length;
+                const completed = tasks.filter((t) => t.status === "selesai").length;
                 const total = tasks.length;
                 rowData = {
                     team_name: item.teams?.name,
@@ -182,7 +223,7 @@ export default function ManajemenMisiPage() {
                     team_name: item.team_name,
                     class_name: item.class_name,
                     doc_count: files.length,
-                    links: files.map((f: any) => f.cloudinary_url).join(", "),
+                    links: files.map((f) => f.cloudinary_url).join(", "),
                 };
             }
             worksheet.addRow(rowData);
@@ -218,7 +259,7 @@ export default function ManajemenMisiPage() {
     };
 
     // Columns for Mission 1
-    const columnsM1: ColumnDef<any>[] = [
+    const columnsM1: ColumnDef<MissionSubmission>[] = [
         {
             id: "full_name",
             accessorKey: "users.full_name",
@@ -268,7 +309,7 @@ export default function ManajemenMisiPage() {
     ];
 
     // Columns for Mission 2
-    const columnsM2: ColumnDef<any>[] = [
+    const columnsM2: ColumnDef<MissionSubmission>[] = [
         {
             id: "team_name",
             accessorKey: "teams.name",
@@ -310,7 +351,7 @@ export default function ManajemenMisiPage() {
     ];
 
     // Columns for Mission 3
-    const columnsM3: ColumnDef<any>[] = [
+    const columnsM3: ColumnDef<MissionSubmission>[] = [
         {
             id: "team_name",
             accessorKey: "teams.name",
@@ -331,7 +372,7 @@ export default function ManajemenMisiPage() {
             header: "Progress Tugas",
             cell: ({ row }) => {
                 const tasks = row.original.mission3_tasks || [];
-                const completed = tasks.filter((t: any) => t.status === "selesai").length;
+                const completed = tasks.filter((t) => t.status === "selesai").length;
                 const total = tasks.length;
                 const percentage = total > 0 ? (completed / total) * 100 : 0;
                 
@@ -351,7 +392,7 @@ export default function ManajemenMisiPage() {
     ];
 
     // Columns for Mission 4
-    const columnsM4: ColumnDef<any>[] = [
+    const columnsM4: ColumnDef<MissionSubmission>[] = [
         {
             id: "team_name",
             accessorKey: "team_name",
@@ -371,13 +412,24 @@ export default function ManajemenMisiPage() {
             accessorKey: "files",
             header: "Dokumentasi",
             cell: ({ row }) => {
-                const files = row.original.files || [];
+                const files: MissionFile[] = row.original.files || [];
+                if (files.length === 0) return <span className="text-xs text-gray-400 italic font-medium">Belum ada</span>;
+                
                 return (
-                    <div className="flex -space-x-2">
-                        {files.slice(0, 3).map((file: any, i: number) => (
-                            <div key={i} className="w-8 h-8 rounded-lg border-2 border-white bg-gray-100 overflow-hidden shadow-sm">
-                                {file.media_type === "image" ? (
-                                    <img src={file.cloudinary_url} alt="" className="w-full h-full object-cover" />
+                    <button 
+                        onClick={() => setSelectedM4Submission(row.original)}
+                        className="flex -space-x-2 cursor-pointer hover:scale-105 transition-transform"
+                    >
+                        {files.slice(0, 3).map((file, i) => (
+                            <div key={i} className="w-8 h-8 rounded-lg border-2 border-white bg-gray-100 overflow-hidden shadow-sm relative">
+                                {file.media_type === "foto" ? (
+                                    <Image 
+                                        src={file.cloudinary_url} 
+                                        alt="Dokumentasi" 
+                                        fill 
+                                        className="object-cover"
+                                        sizes="32px"
+                                    />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-[#1A5C0A] text-white">
                                         <VideoIcon size={12} />
@@ -390,14 +442,14 @@ export default function ManajemenMisiPage() {
                                 +{files.length - 3}
                             </div>
                         )}
-                    </div>
+                    </button>
                 );
             },
         },
     ];
 
     return (
-        <div className="mx-auto px-8 py-6 space-y-8 animate-in fade-in duration-500">
+        <div className="mx-auto px-4 md:px-8 py-4 md:py-6 space-y-6 md:space-y-8 animate-in fade-in duration-500">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
@@ -417,7 +469,7 @@ export default function ManajemenMisiPage() {
             </div>
 
             <Tabs defaultValue="1" className="space-y-6" onValueChange={setActiveTab}>
-                <TabsList className="bg-white/50 backdrop-blur-sm rounded-2xl border border-[#1A5C0A]/10 w-fit flex h-auto">
+                <TabsList className="bg-white/50 backdrop-blur-sm rounded-2xl border border-[#1A5C0A]/10 w-full flex h-auto p-1 md:p-1.5 overflow-x-auto justify-start md:justify-center flex-nowrap scrollbar-hide">
                     {[
                         { id: "1", label: "Misi 1", icon: MessageSquare },
                         { id: "2", label: "Misi 2", icon: Lightbulb },
@@ -427,9 +479,9 @@ export default function ManajemenMisiPage() {
                         <TabsTrigger 
                             key={tab.id} 
                             value={tab.id}
-                            className="flex items-center gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-[#1A5C0A] data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-widest"
+                            className="flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 rounded-xl data-[state=active]:bg-[#1A5C0A] data-[state=active]:text-white transition-all font-bold text-[10px] md:text-xs uppercase tracking-widest whitespace-nowrap"
                         >
-                            <tab.icon size={16} />
+                            <tab.icon size={14} className="md:w-4 md:h-4" />
                             {tab.label}
                         </TabsTrigger>
                     ))}
@@ -472,7 +524,7 @@ export default function ManajemenMisiPage() {
                                             <p className="text-xs text-[#6B3A00]/40">Jadwal akan muncul di sini setelah tim mengajukan</p>
                                         </div>
                                     ) : (
-                                        schedules.map((s: any) => {
+                                        schedules.map((s) => {
                                             const isApproved = s.teacher_approved;
                                             const isPending = !!s.submitted_at && !isApproved;
                                             const approving = approvingTeamId === s.team_id;
@@ -510,7 +562,7 @@ export default function ManajemenMisiPage() {
                                                         {/* Task preview */}
                                                         {(s.mission3_tasks || []).slice(0, 3).length > 0 && (
                                                             <div className="flex flex-wrap gap-1 mt-2">
-                                                                {(s.mission3_tasks || []).slice(0, 3).map((t: any) => (
+                                                                {(s.mission3_tasks || []).slice(0, 3).map((t) => (
                                                                     <span key={t.id} className="text-[9px] font-bold px-2 py-0.5 bg-[#FFF3DF] text-[#905D17] rounded-md border border-[#FFD59E]/50">
                                                                         {t.title}
                                                                     </span>
@@ -550,21 +602,86 @@ export default function ManajemenMisiPage() {
                         )}
 
                         <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-1 border border-[#1A5C0A]/10 shadow-xl shadow-[#1A5C0A]/5">
-                            <DataTable
-                                columns={
-                                    n === 1 ? columnsM1 :
-                                    n === 2 ? columnsM2 :
-                                    n === 3 ? columnsM3 :
-                                    columnsM4
-                                }
-                                data={data}
-                                filterColumn={n === 1 ? "full_name" : "team_name"}
-                                searchPlaceholder={n === 1 ? "Cari nama siswa..." : "Cari nama tim..."}
-                            />
+                            {loading ? (
+                                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                                    <Loader2 size={32} className="animate-spin text-[#1A5C0A]" />
+                                    <p className="text-sm font-bold text-[#1A5C0A]/50 tracking-widest uppercase">Memuat Data...</p>
+                                </div>
+                            ) : (
+                                <DataTable
+                                    columns={
+                                        n === 1 ? columnsM1 :
+                                        n === 2 ? columnsM2 :
+                                        n === 3 ? columnsM3 :
+                                        columnsM4
+                                    }
+                                    data={data}
+                                    filterColumn={n === 1 ? "full_name" : "team_name"}
+                                    searchPlaceholder={n === 1 ? "Cari nama siswa..." : "Cari nama tim..."}
+                                />
+                            )}
                         </div>
                     </TabsContent>
                 ))}
             </Tabs>
+
+            {/* Drawer Dokumentasi Misi 4 */}
+            <Drawer open={!!selectedM4Submission} onOpenChange={(open) => !open && setSelectedM4Submission(null)}>
+                <DrawerContent className="max-h-[90vh] rounded-t-[3rem] border-none shadow-2xl bg-[#F7FFF4]">
+                    <div className="mx-auto w-12 h-1.5 bg-[#1A5C0A]/10 rounded-full my-4 shrink-0" />
+                    <DrawerHeader className="px-8 md:px-12 text-center md:text-left">
+                        <div className="flex items-center gap-3 mb-2 justify-center md:justify-start">
+                            <div className="p-2 bg-[#B4FF9F] rounded-xl">
+                                <Camera size={20} className="text-[#1A5C0A]" />
+                            </div>
+                            <DrawerTitle className="text-2xl font-black text-[#333333] tracking-tight uppercase">
+                                Dokumentasi Tim: {selectedM4Submission?.team_name}
+                            </DrawerTitle>
+                        </div>
+                    </DrawerHeader>
+
+                    <div className="px-8 md:px-12 pb-12 pt-6 overflow-y-auto">
+                        {selectedM4Submission?.files && selectedM4Submission.files.length > 0 ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                {selectedM4Submission.files.map((file, i) => (
+                                    <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                                        {file.media_type === "foto" ? (
+                                            <div className="aspect-square relative bg-gray-100">
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img src={file.cloudinary_url} alt="Dokumentasi" className="w-full h-full object-cover" />
+                                            </div>
+                                        ) : file.media_type === "video" ? (
+                                            <div className="aspect-square relative bg-black flex items-center justify-center group">
+                                                <video src={file.cloudinary_url} className="w-full h-full object-contain" controls />
+                                            </div>
+                                        ) : (
+                                            <div className="aspect-square relative bg-gray-100 flex items-center justify-center flex-col gap-2">
+                                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">📄</div>
+                                                <span className="text-[10px] font-bold text-gray-500">Dokumen Pendukung</span>
+                                            </div>
+                                        )}
+                                        {file.caption && (
+                                            <div className="p-3 bg-white">
+                                                <p className="text-xs text-gray-600 leading-relaxed font-medium line-clamp-3">{file.caption}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center p-8 bg-gray-50 rounded-2xl border border-gray-100">
+                                <p className="text-sm font-medium text-gray-400">Belum ada dokumentasi</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="p-8 border-t border-[#1A5C0A]/5 bg-white/80 backdrop-blur-md rounded-b-[3rem]">
+                        <Button onClick={() => setSelectedM4Submission(null)} className="w-full h-12 rounded-2xl bg-[#1A5C0A] text-white font-black text-[10px] uppercase tracking-widest cursor-pointer">
+                            Tutup
+                        </Button>
+                    </div>
+                </DrawerContent>
+            </Drawer>
         </div>
     );
 }

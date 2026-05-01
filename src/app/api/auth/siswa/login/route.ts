@@ -29,63 +29,21 @@ export async function POST(request: NextRequest) {
     }
 
     const kelas = kelasResult.data;
-    let studentId: string;
+    if (!userResult.data) {
+      return NextResponse.json({ error: "Siswa tidak terdaftar di sistem" }, { status: 404 });
+    }
 
-    if (userResult.data) {
-      // User sudah ada — cek keanggotaan kelas
-      studentId = userResult.data.id;
+    const studentId = userResult.data.id;
 
-      const { data: existingMember } = await supabase
-        .from("class_members")
-        .select("student_id")
-        .eq("class_id", class_id)
-        .eq("student_id", studentId)
-        .single();
+    const { data: existingMember } = await supabase
+      .from("class_members")
+      .select("student_id")
+      .eq("class_id", class_id)
+      .eq("student_id", studentId)
+      .single();
 
-      if (!existingMember) {
-        // Daftarkan ke kelas baru + inisialisasi progress secara paralel
-        await Promise.all([
-          supabase.from("class_members").insert({
-            class_id,
-            student_id: studentId,
-            team_role: "belum_pilih",
-          }),
-          supabase.from("mission_progress").insert([
-            { student_id: studentId, class_id, mission_number: 1, status: "locked", pretest_status: "in_progress", posttest_status: "locked", mission1_step: 1 },
-            { student_id: studentId, class_id, mission_number: 2, status: "locked", pretest_status: "locked", posttest_status: "locked" },
-            { student_id: studentId, class_id, mission_number: 3, status: "locked", pretest_status: "locked", posttest_status: "locked" },
-            { student_id: studentId, class_id, mission_number: 4, status: "locked", pretest_status: "locked", posttest_status: "locked" },
-          ]),
-        ]);
-      }
-    } else {
-      // Siswa baru — buat akun
-      const { data: newUser, error: userError } = await supabase
-        .from("users")
-        .insert({ full_name, role: "siswa" })
-        .select("id")
-        .single();
-
-      if (userError || !newUser) {
-        return NextResponse.json({ error: "Gagal membuat akun siswa" }, { status: 500 });
-      }
-
-      studentId = newUser.id;
-
-      // class_members + mission_progress paralel
-      await Promise.all([
-        supabase.from("class_members").insert({
-          class_id,
-          student_id: studentId,
-          team_role: "belum_pilih",
-        }),
-        supabase.from("mission_progress").insert([
-          { student_id: studentId, class_id, mission_number: 1, status: "locked", pretest_status: "in_progress", posttest_status: "locked", mission1_step: 1 },
-          { student_id: studentId, class_id, mission_number: 2, status: "locked", pretest_status: "locked", posttest_status: "locked" },
-          { student_id: studentId, class_id, mission_number: 3, status: "locked", pretest_status: "locked", posttest_status: "locked" },
-          { student_id: studentId, class_id, mission_number: 4, status: "locked", pretest_status: "locked", posttest_status: "locked" },
-        ]),
-      ]);
+    if (!existingMember) {
+      return NextResponse.json({ error: "Siswa tidak terdaftar di kelas ini" }, { status: 403 });
     }
 
     // ── Session: upsert (delete+insert menjadi 1 query) ───────────────────

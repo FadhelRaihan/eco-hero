@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle, Clock, Lock, PlayCircle, Users, Download, Mail, ExternalLink, Loader2, Target, BookOpen, Briefcase, FileText, Image as ImageIcon, Video as VideoIcon } from "lucide-react";
+import { ArrowLeft, CheckCircle, Clock, Lock, PlayCircle, Users, Download, ExternalLink, Loader2, Target, Briefcase, FileText, Image as ImageIcon, Video as VideoIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
@@ -40,6 +41,47 @@ const STATUS_CONFIG = {
     locked: { icon: Lock, color: "text-[#333333]/30 bg-[#333333]/5"},
 };
 
+interface TaskItem {
+    title: string;
+    status: string;
+    user?: {
+        full_name: string;
+    };
+}
+
+interface MissionFile {
+    media_type: "image" | "video";
+    cloudinary_url: string;
+    caption: string;
+}
+
+interface SubmissionDetail {
+    perspective_env?: string;
+    perspective_soc?: string;
+    case_topic?: string;
+    env_problem?: string;
+    social_problem?: string;
+    solution?: string;
+    solution_reason?: string;
+    action_type?: string;
+    action_name?: string;
+    materials?: string;
+    target_audience?: string;
+    tasks?: TaskItem[];
+    files?: MissionFile[];
+}
+
+interface TeamDetail {
+    name: string;
+    selected_case: string;
+    team_members: {
+        student_id: string;
+        users: {
+            full_name: string;
+        };
+    }[];
+}
+
 export default function DetailKelasPage({
     params,
 }: {
@@ -55,8 +97,8 @@ export default function DetailKelasPage({
     const [drawerType, setDrawerType] = useState<'MISSION' | 'TEAM' | null>(null);
     const [selectedMission, setSelectedMission] = useState<number | null>(null);
     const [selectedStudentForDrawer, setSelectedStudentForDrawer] = useState<StudentProgress | null>(null);
-    const [submissionDetail, setSubmissionDetail] = useState<any>(null);
-    const [teamDetail, setTeamDetail] = useState<any>(null);
+    const [submissionDetail, setSubmissionDetail] = useState<SubmissionDetail | null>(null);
+    const [teamDetail, setTeamDetail] = useState<TeamDetail | null>(null);
     const [loadingDrawer, setLoadingDrawer] = useState(false);
 
     const handleOpenMissionDrawer = async (student: StudentProgress, missionNumber: number) => {
@@ -74,7 +116,7 @@ export default function DetailKelasPage({
             } else {
                 toast.error("Gagal mengambil detail submission");
             }
-        } catch (error) {
+        } catch {
             toast.error("Terjadi kesalahan saat mengambil data");
         } finally {
             setLoadingDrawer(false);
@@ -96,8 +138,8 @@ export default function DetailKelasPage({
             } else {
                 toast.error("Gagal mengambil detail tim");
             }
-        } catch (error) {
-            toast.error("Terjadi kesalahan saat mengambil data");
+        } catch {
+            toast.error("Terjadi kesalahan saat mengambil data:");
         } finally {
             setLoadingDrawer(false);
         }
@@ -116,6 +158,8 @@ export default function DetailKelasPage({
 
                 if (kelasRes.ok) setKelasName(kelasResult.data?.name ?? "");
                 if (progressRes.ok) setStudents(progressResult.data ?? []);
+            } catch {
+                toast.error("Gagal mengambil data kelas");
             } finally {
                 setLoading(false);
             }
@@ -123,6 +167,14 @@ export default function DetailKelasPage({
 
         fetchData();
     }, [classId]);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="animate-spin text-[#1A5C0A]" size={32} />
+            </div>
+        );
+    }
 
     const handleExportExcel = async () => {
         const workbook = new ExcelJS.Workbook();
@@ -301,7 +353,7 @@ export default function DetailKelasPage({
 
                 <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-1 border border-[#1A5C0A]/10 shadow-xl shadow-[#1A5C0A]/5">
                     <DataTable
-                        columns={columns as any}
+                        columns={columns}
                         data={students}
                         filterColumn="full_name"
                         searchPlaceholder="Cari nama siswa..."
@@ -396,7 +448,7 @@ export default function DetailKelasPage({
                                     {/* Mission 3: Tasks */}
                                     {selectedMission === 3 && submissionDetail.tasks && (
                                         <div className="space-y-3">
-                                            {submissionDetail.tasks.map((task: any, i: number) => (
+                                            {submissionDetail.tasks.map((task, i) => (
                                                 <div key={i} className="p-4 rounded-2xl bg-white border border-[#1A5C0A]/5 flex items-center justify-between shadow-sm">
                                                     <div className="flex items-center gap-4">
                                                         <div className={cn(
@@ -426,14 +478,16 @@ export default function DetailKelasPage({
                                     {/* Mission 4: Gallery */}
                                     {selectedMission === 4 && submissionDetail.files && (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                            {submissionDetail.files.map((file: any, i: number) => (
+                                            {submissionDetail.files.map((file, i) => (
                                                 <div key={i} className="group relative bg-white rounded-[2.5rem] overflow-hidden border border-[#1A5C0A]/10 shadow-lg hover:shadow-2xl transition-all duration-500">
                                                     <div className="aspect-square relative overflow-hidden">
                                                         {file.media_type === "image" ? (
-                                                            <img 
+                                                            <Image 
                                                                 src={file.cloudinary_url} 
                                                                 alt={file.caption}
-                                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                                                fill
+                                                                className="object-cover group-hover:scale-110 transition-transform duration-700"
+                                                                unoptimized
                                                             />
                                                         ) : (
                                                             <div className="w-full h-full bg-[#1A5C0A] flex flex-col items-center justify-center gap-3 text-[#B4FF9F]">
@@ -442,7 +496,7 @@ export default function DetailKelasPage({
                                                             </div>
                                                         )}
                                                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6">
-                                                            <p className="text-white text-xs font-medium leading-relaxed italic">"{file.caption}"</p>
+                                                            <p className="text-white text-xs font-medium leading-relaxed italic">{file.caption}</p>
                                                         </div>
                                                     </div>
                                                     <div className="p-5 border-t border-[#1A5C0A]/5 bg-white flex items-center justify-between">
@@ -492,7 +546,7 @@ export default function DetailKelasPage({
                                 <div className="space-y-4">
                                     <h4 className="text-[11px] font-black text-[#333333]/40 uppercase tracking-[0.2em] px-2">Anggota Kesatuan ({teamDetail?.team_members?.length || 0})</h4>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        {teamDetail?.team_members?.map((member: any, i: number) => (
+                                        {teamDetail?.team_members?.map((member, i) => (
                                             <div key={i} className="p-4 rounded-2xl bg-white border border-[#1A5C0A]/5 flex items-center gap-4 shadow-sm hover:shadow-md transition-all">
                                                 <Avatar className="w-12 h-12 border-2 border-[#1A5C0A]/5">
                                                     <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.users?.full_name}`} />

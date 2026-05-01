@@ -1,25 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { 
-    Users, 
-    CheckCircle, 
-    Clock, 
-    Lock, 
-    PlayCircle, 
-    Download, 
-    Loader2, 
-    Target, 
-    FileText, 
-    Image as ImageIcon, 
-    Video as VideoIcon,
-    ExternalLink,
-    School,
-    Briefcase,
+import {
+    Users,
+    CheckCircle,
+    Lock,
+    PlayCircle,
+    Download,
+    Loader2,
+    Target,
     Trash2,
-    Filter
+    Pencil,
+    UserPlus
 } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
@@ -30,23 +34,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
     Drawer,
-    DrawerClose,
     DrawerContent,
-    DrawerDescription,
-    DrawerFooter,
     DrawerHeader,
     DrawerTitle,
 } from "@/components/ui/drawer";
-import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuLabel,
-    DropdownMenuRadioGroup,
-    DropdownMenuRadioItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -57,7 +48,6 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChevronDown } from "lucide-react";
 
 interface StudentProgress {
     student_id: string;
@@ -80,53 +70,157 @@ const STATUS_CONFIG = {
     locked: { icon: Lock, color: "text-[#333333]/30 bg-[#333333]/5" },
 };
 
+interface TeamDetail {
+    id: string;
+    name: string;
+    selected_case: string;
+    team_members: {
+        student_id: string;
+        users: {
+            full_name: string;
+        };
+    }[];
+}
+
+interface Mission1Detail {
+    case_topic?: string;
+    perspective_env?: string;
+    perspective_soc?: string;
+    created_at?: string;
+}
+
+interface Mission2Detail {
+    env_problem?: string;
+    social_problem?: string;
+    solution?: string;
+    solution_reason?: string;
+    action_type?: string;
+    action_name?: string;
+    materials?: string;
+    target_audience?: string;
+}
+
+interface Mission3Task {
+    id: string;
+    title: string;
+    scheduled_date: string;
+    status: string;
+    user?: { full_name: string };
+}
+
+interface Mission3Detail {
+    tasks?: Mission3Task[];
+}
+
+interface Mission4File {
+    id: string;
+    cloudinary_url: string;
+    media_type: string;
+    caption?: string;
+    created_at?: string;
+}
+
+interface Mission4Detail {
+    files?: Mission4File[];
+}
+
 export default function ManajemenSiswaPage() {
     const { user } = useAuth();
     const [students, setStudents] = useState<StudentProgress[]>([]);
     const [loading, setLoading] = useState(true);
-
-    // Filter state
-    const [selectedClass, setSelectedClass] = useState<string>("all");
-    const [classes, setClasses] = useState<{id: string, name: string}[]>([]);
+    const [className, setClassName] = useState("");
 
     // Drawer state
     const [drawerType, setDrawerType] = useState<'MISSION' | 'TEAM' | null>(null);
     const [selectedMission, setSelectedMission] = useState<number | null>(null);
     const [selectedStudentForDrawer, setSelectedStudentForDrawer] = useState<StudentProgress | null>(null);
-    const [submissionDetail, setSubmissionDetail] = useState<any>(null);
-    const [teamDetail, setTeamDetail] = useState<any>(null);
+    const [submissionDetail, setSubmissionDetail] = useState<unknown>(null);
+    const [teamDetail, setTeamDetail] = useState<TeamDetail | null>(null);
     const [loadingDrawer, setLoadingDrawer] = useState(false);
 
-    // Delete state
+    // Add/Edit states
+    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [formLoading, setFormLoading] = useState(false);
     const [studentToDelete, setStudentToDelete] = useState<StudentProgress | null>(null);
+    const [editingStudent, setEditingStudent] = useState<StudentProgress | null>(null);
+
+    // Form inputs
+    const [newStudent, setNewStudent] = useState({ full_name: "" });
+    const [editName, setEditName] = useState("");
     const [deleting, setDeleting] = useState(false);
+
+    const fetchStudents = useCallback(async () => {
+        try {
+            const res = await fetch(`/api/guru/students?teacher_id=${user?.id}`);
+            const result = await res.json();
+            if (res.ok) {
+                setStudents(result.data ?? []);
+                if (result.data && result.data.length > 0) {
+                    setClassName(result.data[0].class_name);
+                }
+            }
+        } finally {
+            setLoading(false);
+        }
+    }, [user?.id]);
 
     useEffect(() => {
         if (user?.id) {
             fetchStudents();
-            fetchClasses();
         }
-    }, [user?.id]);
+    }, [user?.id, fetchStudents]);
 
-    async function fetchClasses() {
+    const handleAddStudent = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user?.id) return;
+        setFormLoading(true);
         try {
-            const res = await fetch(`/api/classes?teacher_id=${user?.id}`);
+            const res = await fetch("/api/guru/students", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...newStudent, teacher_id: user.id }),
+            });
             const result = await res.json();
-            if (res.ok) setClasses(result.data ?? []);
-        } catch (error) {
-            console.error("Error fetching classes:", error);
-        }
-    }
-
-    async function fetchStudents() {
-        try {
-            const res = await fetch(`/api/guru/students?teacher_id=${user?.id}`);
-            const result = await res.json();
-            if (res.ok) setStudents(result.data ?? []);
+            if (res.ok) {
+                toast.success("Siswa berhasil ditambahkan");
+                setIsAddDialogOpen(false);
+                setNewStudent({ full_name: "" });
+                fetchStudents();
+            } else {
+                toast.error(result.error || "Gagal menambahkan siswa");
+            }
+        } catch {
+            toast.error("Terjadi kesalahan");
         } finally {
-            setLoading(false);
+            setFormLoading(false);
         }
-    }
+    };
+
+    const handleEditStudent = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingStudent) return;
+        setFormLoading(true);
+        try {
+            const res = await fetch(`/api/guru/students/${editingStudent.student_id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ full_name: editName }),
+            });
+            const result = await res.json();
+            if (res.ok) {
+                toast.success("Nama siswa berhasil diperbarui");
+                setIsEditDialogOpen(false);
+                fetchStudents();
+            } else {
+                toast.error(result.error || "Gagal memperbarui siswa");
+            }
+        } catch {
+            toast.error("Terjadi kesalahan");
+        } finally {
+            setFormLoading(false);
+        }
+    };
 
     const handleDeleteStudent = async () => {
         if (!studentToDelete) return;
@@ -136,13 +230,13 @@ export default function ManajemenSiswaPage() {
                 method: "DELETE",
             });
             if (res.ok) {
-                setStudents(prev => prev.filter(s => !(s.student_id === studentToDelete.student_id && s.class_id === studentToDelete.class_id)));
+                setStudents(prev => prev.filter(s => s.student_id !== studentToDelete.student_id));
                 toast.success("Siswa berhasil dihapus");
                 setStudentToDelete(null);
             } else {
                 toast.error("Gagal menghapus siswa");
             }
-        } catch (error) {
+        } catch {
             toast.error("Terjadi kesalahan");
         } finally {
             setDeleting(false);
@@ -164,7 +258,7 @@ export default function ManajemenSiswaPage() {
             } else {
                 toast.error("Gagal mengambil detail submission");
             }
-        } catch (error) {
+        } catch {
             toast.error("Terjadi kesalahan saat mengambil data");
         } finally {
             setLoadingDrawer(false);
@@ -186,7 +280,7 @@ export default function ManajemenSiswaPage() {
             } else {
                 toast.error("Gagal mengambil detail tim");
             }
-        } catch (error) {
+        } catch {
             toast.error("Terjadi kesalahan saat mengambil data");
         } finally {
             setLoadingDrawer(false);
@@ -195,7 +289,7 @@ export default function ManajemenSiswaPage() {
 
     const handleExportExcel = async () => {
         try {
-            if (filteredStudents.length === 0) {
+            if (students.length === 0) {
                 toast.error("Tidak ada data untuk diekspor");
                 return;
             }
@@ -205,7 +299,6 @@ export default function ManajemenSiswaPage() {
 
             worksheet.columns = [
                 { header: 'Nama Siswa', key: 'full_name', width: 30 },
-                { header: 'Kelas', key: 'class_name', width: 20 },
                 { header: 'Nama Tim', key: 'team_name', width: 25 },
                 { header: 'Misi 1', key: 'm1', width: 15 },
                 { header: 'Misi 2', key: 'm2', width: 15 },
@@ -213,11 +306,10 @@ export default function ManajemenSiswaPage() {
                 { header: 'Misi 4', key: 'm4', width: 15 },
             ];
 
-            filteredStudents.forEach(student => {
+            students.forEach(student => {
                 const getStatus = (num: number) => student.missions.find(m => m.mission_number === num)?.status || 'locked';
                 worksheet.addRow({
                     full_name: student.full_name,
-                    class_name: student.class_name,
                     team_name: student.team_name,
                     m1: getStatus(1).toUpperCase(),
                     m2: getStatus(2).toUpperCase(),
@@ -226,38 +318,17 @@ export default function ManajemenSiswaPage() {
                 });
             });
 
-            // Styling the header
             const headerRow = worksheet.getRow(1);
             headerRow.font = { bold: true, color: { argb: "FF1A5C0A" } };
             headerRow.eachCell((cell) => {
-                cell.fill = {
-                    type: "pattern",
-                    pattern: "solid",
-                    fgColor: { argb: "FFB4FF9F" },
-                };
+                cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFB4FF9F" } };
                 cell.alignment = { vertical: 'middle', horizontal: 'center' };
             });
 
-            // Add borders to all cells
-            worksheet.eachRow((row) => {
-                row.eachCell((cell) => {
-                    cell.border = {
-                        top: { style: 'thin' },
-                        left: { style: 'thin' },
-                        bottom: { style: 'thin' },
-                        right: { style: 'thin' }
-                    };
-                });
-            });
-
             const buffer = await workbook.xlsx.writeBuffer();
-            const className = selectedClass === "all" ? "Semua_Kelas" : classes.find(c => c.id === selectedClass)?.name || "Kelas";
-            const fileName = `Manajemen_Siswa_${className}_${new Date().getTime()}.xlsx`;
-            
-            saveAs(new Blob([buffer], { type: "application/octet-stream" }), fileName);
-            toast.success(`Data ${filteredStudents.length} siswa berhasil diekspor`);
-        } catch (error) {
-            console.error("Export Error:", error);
+            saveAs(new Blob([buffer], { type: "application/octet-stream" }), `Manajemen_Siswa_${className}_${new Date().getTime()}.xlsx`);
+            toast.success(`Data ${students.length} siswa berhasil diekspor`);
+        } catch {
             toast.error("Gagal mengekspor data");
         }
     };
@@ -279,80 +350,165 @@ export default function ManajemenSiswaPage() {
             ),
         },
         {
-            accessorKey: "class_name",
-            header: "Kelas",
-            cell: ({ row }) => (
-                <div className="flex items-center gap-2">
-                    <School size={14} className="text-[#1A5C0A]/40" />
-                    <span className="text-xs font-bold text-[#333333]/60">{row.getValue("class_name")}</span>
-                </div>
-            ),
-        },
-        {
             accessorKey: "team_name",
             header: "Tim",
             cell: ({ row }) => {
                 const student = row.original;
+                const teamName = student.team_name;
+                if (!teamName) return <div className="flex justify-center w-8 md:w-12 text-[#333333]/40 font-bold">-</div>;
                 return (
-                    <button
-                        onClick={() => student.team_id && handleOpenTeamDrawer(student)}
-                        disabled={!student.team_id}
-                        className={cn(
-                            "text-xs font-bold truncate max-w-[100px] transition-all",
-                            student.team_id 
-                                ? "text-[#1A5C0A] hover:underline cursor-pointer" 
-                                : "text-[#333333]/40 cursor-not-allowed"
-                        )}
-                    >
-                        {row.getValue("team_name") || "-"}
-                    </button>
-                );
-            },
-        },
-        ...[1, 2, 3, 4].map((num) => ({
-            id: `misi-${num}`,
-            header: () => <div className="text-center w-12">M{num}</div>,
-            cell: ({ row }: { row: { original: StudentProgress } }) => {
-                const mission = row.original.missions.find((m) => m.mission_number === num);
-                const status = mission?.status ?? "locked";
-                const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
-                
-                return (
-                    <div className="flex justify-center w-12">
+                    <div className="flex items-center gap-2 min-w-[80px] md:min-w-[120px]">
                         <button
-                            onClick={() => status !== "locked" && handleOpenMissionDrawer(row.original, num)}
-                            disabled={status === "locked"}
-                            className={cn(
-                                "w-7 h-7 rounded-lg flex items-center justify-center transition-all",
-                                status !== "locked" ? "hover:scale-110 active:scale-95 shadow-sm cursor-pointer" : "opacity-50 cursor-not-allowed",
-                                config.color
-                            )}
+                            onClick={() => student.team_id && handleOpenTeamDrawer(student)}
+                            className="flex items-center gap-2 cursor-pointer hover:underline"
                         >
-                            {config.icon && <config.icon size={16} />}
+                            <div className="w-6 h-6 rounded-lg bg-[#F9FFA4] flex items-center justify-center shrink-0">
+                                <Users size={12} className="text-[#7A7200]" />
+                            </div>
+                            <span className="text-[10px] md:text-xs font-bold text-[#333333] truncate">
+                                {teamName}
+                            </span>
                         </button>
                     </div>
                 );
             },
-        })),
+        },
+        {
+            id: "m1",
+            header: () => <div className="text-center w-8 md:w-12">M1</div>,
+            cell: ({ row }) => {
+                const num = 1;
+                const mission = row.original.missions.find((m) => m.mission_number === num);
+                const status = mission?.status ?? "locked";
+                const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
+                return (
+                    <div className="flex justify-center w-8 md:w-12">
+                        <button
+                            onClick={() => status !== "locked" && handleOpenMissionDrawer(row.original, num)}
+                            disabled={status === "locked"}
+                            className={cn(
+                                "w-6 h-6 md:w-8 md:h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110",
+                                status !== "locked" ? "cursor-pointer" : "opacity-50 cursor-not-allowed",
+                                config.color
+                            )}
+                        >
+                            {config.icon && <config.icon size={12} />}
+                        </button>
+                    </div>
+                );
+            },
+        },
+        {
+            id: "m2",
+            header: () => <div className="text-center w-8 md:w-12">M2</div>,
+            cell: ({ row }) => {
+                const num = 2;
+                const mission = row.original.missions.find((m) => m.mission_number === num);
+                const status = mission?.status ?? "locked";
+                const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
+                return (
+                    <div className="flex justify-center w-8 md:w-12">
+                        <button
+                            onClick={() => status !== "locked" && handleOpenMissionDrawer(row.original, num)}
+                            disabled={status === "locked"}
+                            className={cn(
+                                "w-6 h-6 md:w-8 md:h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110",
+                                status !== "locked" ? "cursor-pointer" : "opacity-50 cursor-not-allowed",
+                                config.color
+                            )}
+                        >
+                            {config.icon && <config.icon size={12} />}
+                        </button>
+                    </div>
+                );
+            },
+        },
+        {
+            id: "m3",
+            header: () => <div className="text-center w-8 md:w-12">M3</div>,
+            cell: ({ row }) => {
+                const num = 3;
+                const mission = row.original.missions.find((m) => m.mission_number === num);
+                const status = mission?.status ?? "locked";
+                const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
+                return (
+                    <div className="flex justify-center w-8 md:w-12">
+                        <button
+                            onClick={() => status !== "locked" && handleOpenMissionDrawer(row.original, num)}
+                            disabled={status === "locked"}
+                            className={cn(
+                                "w-6 h-6 md:w-8 md:h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110",
+                                status !== "locked" ? "cursor-pointer" : "opacity-50 cursor-not-allowed",
+                                config.color
+                            )}
+                        >
+                            {config.icon && <config.icon size={12} />}
+                        </button>
+                    </div>
+                );
+            },
+        },
+        {
+            id: "m4",
+            header: () => <div className="text-center w-8 md:w-12">M4</div>,
+            cell: ({ row }) => {
+                const num = 4;
+                const mission = row.original.missions.find((m) => m.mission_number === num);
+                const status = mission?.status ?? "locked";
+                const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
+                return (
+                    <div className="flex justify-center w-8 md:w-12">
+                        <button
+                            onClick={() => status !== "locked" && handleOpenMissionDrawer(row.original, num)}
+                            disabled={status === "locked"}
+                            className={cn(
+                                "w-6 h-6 md:w-8 md:h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110",
+                                status !== "locked" ? "cursor-pointer" : "opacity-50 cursor-not-allowed",
+                                config.color
+                            )}
+                        >
+                            {config.icon && <config.icon size={12} />}
+                        </button>
+                    </div>
+                );
+            },
+        },
         {
             id: "actions",
-            header: () => <div className="text-center">Aksi</div>,
-            cell: ({ row }) => (
-                <div className="flex justify-center">
-                    <button
-                        onClick={() => setStudentToDelete(row.original)}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
-                    >
-                        <Trash2 size={16} />
-                    </button>
-                </div>
-            ),
+            header: () => <div className="text-center w-8 md:w-12">Aksi</div>,
+            cell: ({ row }) => {
+                const student = row.original;
+                return (
+                    <div className="flex items-center justify-center gap-1 md:gap-2 w-8 md:w-12">
+                        <button
+                            onClick={() => {
+                                setEditingStudent(student);
+                                setEditName(student.full_name);
+                                setIsEditDialogOpen(true);
+                            }}
+                            className="p-1.5 md:p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                        >
+                            <Pencil size={14} />
+                        </button>
+                        <button
+                            onClick={() => setStudentToDelete(student)}
+                            className="p-1.5 md:p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                        >
+                            <Trash2 size={14} />
+                        </button>
+                    </div>
+                );
+            },
         },
     ];
 
-    const filteredStudents = selectedClass === "all" 
-        ? students 
-        : students.filter(s => s.class_id === selectedClass);
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="animate-spin text-[#1A5C0A]" size={32} />
+            </div>
+        );
+    }
 
     return (
         <div className="mx-auto px-8 py-6 space-y-8 animate-in fade-in duration-500">
@@ -360,55 +516,35 @@ export default function ManajemenSiswaPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <h1 className="text-2xl font-black text-[#333333] tracking-tight">Manajemen Siswa</h1>
-                    <p className="text-xs text-[#333333]/60 font-bold uppercase tracking-widest">{students.length} Total Siswa Terdaftar</p>
+                    <p className="text-xs text-[#333333]/60 font-bold uppercase tracking-widest">{className || "Siswa Kelas"} • {students.length} Total Terdaftar</p>
                 </div>
 
-                <Button
-                    onClick={handleExportExcel}
-                    className="bg-[#B4FF9F] hover:bg-[#B4FF9F]/80 text-[#1A5C0A] font-bold px-6 h-11 rounded-xl shadow-sm border border-[#1A5C0A]/10 transition-all active:scale-95 cursor-pointer"
-                >
-                    <Download className="w-4 h-4 mr-2" />
-                    Ekspor Excel
-                </Button>
+                <div className="flex gap-2 md:gap-3">
+                    <Button
+                        onClick={() => setIsAddDialogOpen(true)}
+                        className="bg-[#1A5C0A] hover:bg-[#1A5C0A]/90 text-white font-bold px-4 md:px-6 h-9 md:h-11 text-[10px] md:text-sm rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer"
+                    >
+                        <UserPlus className="w-3 h-3 md:w-4 md:h-4 mr-2" />
+                        Tambah Siswa
+                    </Button>
+                    <Button
+                        onClick={handleExportExcel}
+                        className="bg-[#B4FF9F] hover:bg-[#B4FF9F]/80 text-[#1A5C0A] font-bold px-4 md:px-6 h-9 md:h-11 text-[10px] md:text-sm rounded-xl shadow-sm border border-[#1A5C0A]/10 transition-all active:scale-95 cursor-pointer"
+                    >
+                        <Download className="w-3 h-3 md:w-4 md:h-4 mr-2" />
+                        Ekspor
+                    </Button>
+                </div>
             </div>
 
             {/* Table Area */}
-            <div className="space-y-4">
-                <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-1 border border-[#1A5C0A]/10 shadow-xl shadow-[#1A5C0A]/5">
-                    <DataTable
-                        columns={columns as any}
-                        data={filteredStudents}
-                        filterColumn="full_name"
-                        searchPlaceholder="Cari nama siswa..."
-                        extraActions={
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        className="h-12 w-full md:w-auto px-5 border-2 border-gray-100 rounded-xl font-bold text-gray-600 hover:text-[#1A5C0A] hover:border-[#1A5C0A] transition-all bg-white"
-                                    >
-                                        <Filter className="w-4 h-4 mr-2 text-[#1A5C0A]/40" />
-                                        {selectedClass === "all" ? "Semua Kelas" : classes.find(c => c.id === selectedClass)?.name}
-                                        <ChevronDown className="w-3 h-3 ml-2" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-56 rounded-2xl border-none shadow-2xl p-2">
-                                    <p className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400">Filter Kelas</p>
-                                    <DropdownMenuRadioGroup value={selectedClass} onValueChange={setSelectedClass}>
-                                        <DropdownMenuRadioItem value="all" className="rounded-xl font-bold text-xs py-2 mb-1">
-                                            Semua Kelas
-                                        </DropdownMenuRadioItem>
-                                        {classes.map((c) => (
-                                            <DropdownMenuRadioItem key={c.id} value={c.id} className="rounded-xl font-bold text-xs py-2 mb-1">
-                                                {c.name}
-                                            </DropdownMenuRadioItem>
-                                        ))}
-                                    </DropdownMenuRadioGroup>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        }
-                    />
-                </div>
+            <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-1 border border-[#1A5C0A]/10 shadow-xl shadow-[#1A5C0A]/5">
+                <DataTable
+                    columns={columns}
+                    data={students}
+                    filterColumn="full_name"
+                    searchPlaceholder="Cari nama siswa..."
+                />
             </div>
 
             {/* Delete Confirmation Dialog */}
@@ -417,7 +553,7 @@ export default function ManajemenSiswaPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle className="text-xl font-black text-[#333333] uppercase tracking-tight">Hapus Siswa?</AlertDialogTitle>
                         <AlertDialogDescription className="font-medium text-[#333333]/60 italic">
-                            Apakah Anda yakin ingin menghapus <span className="font-bold text-[#1A5C0A]">{studentToDelete?.full_name}</span> dari kelas <span className="font-bold text-[#1A5C0A]">{studentToDelete?.class_name}</span>? Data progress misi dan tim juga akan dihapus.
+                            Apakah Anda yakin ingin menghapus <span className="font-bold text-[#1A5C0A]">{studentToDelete?.full_name}</span>? Data progress misi dan tim juga akan dihapus secara permanen.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="mt-6">
@@ -433,190 +569,268 @@ export default function ManajemenSiswaPage() {
                 </AlertDialogContent>
             </AlertDialog>
 
+            {/* Add Student Dialog */}
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogContent className="rounded-2xl bg-[#F7FFF4]">
+                    <DialogHeader className="px-4 pt-4">
+                        <DialogTitle className="text-2xl font-black text-[#333333]">Tambah Siswa Baru</DialogTitle>
+                        <DialogDescription className="font-bold text-[#1A5C0A]/60 uppercase tracking-widest text-[10px]">
+                            Daftarkan siswa baru ke dalam kelas Anda
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleAddStudent} className="space-y-6 mt-4">
+                        <div className="space-y-4 px-4">
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase text-[#333333]/40 ml-1">Nama Lengkap</Label>
+                                <Input
+                                    required
+                                    placeholder="Contoh: Ahmad Subardjo"
+                                    className="h-12 rounded-xl bg-white border-[#1A5C0A]/10 focus:ring-[#1A5C0A]"
+                                    value={newStudent.full_name}
+                                    onChange={(e) => setNewStudent({ ...newStudent, full_name: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter className="gap-2 sm:gap-0">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setIsAddDialogOpen(false)}
+                                className="px-8 h-12 rounded-xl font-bold"
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={formLoading}
+                                className="bg-[#1A5C0A] hover:bg-[#1A5C0A]/90 text-white rounded-xl font-bold px-8 h-12"
+                            >
+                                {formLoading ? <Loader2 className="animate-spin mr-2" /> : "Tambah Siswa"}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Student Dialog */}
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogContent className="rounded-2xl bg-[#F7FFF4]">
+                    <DialogHeader className="px-4 pt-4">
+                        <DialogTitle className="text-2xl font-black text-[#333333]">Edit Nama Siswa</DialogTitle>
+                        <DialogDescription className="font-bold text-[#1A5C0A]/60 uppercase tracking-widest text-[10px]">
+                            Perbarui identitas siswa terpilih
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleEditStudent} className="space-y-6 mt-4">
+                        <div className="space-y-2 px-4">
+                            <Label className="text-[10px] font-black uppercase text-[#333333]/40 ml-1">Nama Lengkap</Label>
+                            <Input
+                                required
+                                className="h-12 rounded-xl bg-white border-[#1A5C0A]/10 focus:ring-[#1A5C0A]"
+                                value={editName}
+                                onChange={(e) => setEditName(e.target.value)}
+                            />
+                        </div>
+                        <DialogFooter className="gap-2 sm:gap-0">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setIsEditDialogOpen(false)}
+                                className="px-8 h-12 rounded-xl font-bold"
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={formLoading}
+                                className="bg-[#1A5C0A] hover:bg-[#1A5C0A]/90 text-white rounded-xl font-bold px-8 h-12"
+                            >
+                                {formLoading ? <Loader2 className="animate-spin mr-2" /> : "Edit Siswa"}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
             {/* Submission & Team Drawer */}
             <Drawer open={!!drawerType} onOpenChange={(open) => !open && setDrawerType(null)}>
-                <DrawerContent className="max-h-[90vh] rounded-t-[3rem] border-none shadow-2xl bg-[#F7FFF4] focus-visible:outline-none">
+                <DrawerContent className="max-h-[90vh] rounded-t-[3rem] border-none shadow-2xl bg-[#F7FFF4]">
                     <div className="mx-auto w-12 h-1.5 bg-[#1A5C0A]/10 rounded-full my-4 shrink-0" />
-                    
                     <DrawerHeader className="px-8 md:px-12 text-center md:text-left">
                         <div className="flex items-center gap-3 mb-2 justify-center md:justify-start">
                             <div className="p-2 bg-[#B4FF9F] rounded-xl">
-                                {drawerType === 'MISSION' ? <Target className="w-5 h-5 text-[#1A5C0A]" /> : <Users className="w-5 h-5 text-[#1A5C0A]" />}
+                                {drawerType === 'MISSION' ? <Target className="w-5 h-5 text-[#1A5C0A]" /> : <Users size={20} className="text-[#1A5C0A]" />}
                             </div>
                             <DrawerTitle className="text-2xl font-black text-[#333333] tracking-tight uppercase">
-                                {drawerType === 'MISSION' 
-                                    ? `Detail Misi ${selectedMission}: ${selectedStudentForDrawer?.full_name}`
-                                    : `Detail Tim: ${teamDetail?.name || selectedStudentForDrawer?.team_name}`}
+                                {drawerType === 'MISSION' ? `Misi ${selectedMission}: ${selectedStudentForDrawer?.full_name}` : `Tim: ${teamDetail?.name || selectedStudentForDrawer?.team_name}`}
                             </DrawerTitle>
                         </div>
-                        <DrawerDescription className="font-bold text-[#1A5C0A]/60 uppercase tracking-widest text-[10px]">
-                            {drawerType === 'MISSION' 
-                                ? `Hasil pekerjaan siswa untuk misi ke-${selectedMission}`
-                                : `Informasi lengkap mengenai anggota dan kesatuan tim`}
-                        </DrawerDescription>
                     </DrawerHeader>
 
-                    <div className="px-8 md:px-12 pb-12 pt-6 overflow-y-auto custom-scrollbar">
+                    <div className="px-8 md:px-12 pb-12 pt-6 overflow-y-auto">
                         {loadingDrawer ? (
-                            <div className="py-20 text-center flex flex-col items-center gap-4">
-                                <Loader2 className="w-10 h-10 text-[#1A5C0A] animate-spin" />
-                                <p className="text-[#333333]/40 font-bold uppercase tracking-widest text-xs">Menarik data dari arsip...</p>
-                            </div>
+                            <div className="py-20 text-center"><Loader2 className="w-10 h-10 text-[#1A5C0A] animate-spin mx-auto mb-4" /><p className="text-xs font-bold text-gray-400">MEMUAT DATA...</p></div>
                         ) : drawerType === 'MISSION' ? (
-                            !submissionDetail ? (
-                                <div className="py-20 text-center flex flex-col items-center gap-4">
-                                    <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-sm">
-                                        <FileText className="w-8 h-8 text-gray-200" />
-                                    </div>
-                                    <p className="text-[#333333]/40 font-bold italic uppercase tracking-widest text-xs">Belum ada submission yang tersimpan</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    {/* Mission Rendering (Same as Detail Kelas) */}
-                                    {selectedMission === 1 && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="p-6 rounded-[2rem] bg-white border border-[#1A5C0A]/5 shadow-sm">
-                                                <h4 className="text-[10px] font-black text-[#1A5C0A] uppercase tracking-[0.2em] mb-4">Perspektif Lingkungan</h4>
-                                                <p className="text-sm text-[#333333] leading-relaxed font-medium">{submissionDetail.perspective_env}</p>
-                                            </div>
-                                            <div className="p-6 rounded-[2rem] bg-white border border-[#1A5C0A]/5 shadow-sm">
-                                                <h4 className="text-[10px] font-black text-[#1A5C0A] uppercase tracking-[0.2em] mb-4">Perspektif Sosial</h4>
-                                                <p className="text-sm text-[#333333] leading-relaxed font-medium">{submissionDetail.perspective_soc}</p>
-                                            </div>
-                                            <div className="md:col-span-2 p-4 rounded-2xl bg-[#F9FFA4]/30 border border-[#F9FFA4] inline-block w-fit">
-                                                <span className="text-[10px] font-black text-[#7A7200] uppercase tracking-widest">Topik Kasus: {submissionDetail.case_topic}</span>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {selectedMission === 2 && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {[
-                                                { label: "Masalah Lingkungan", val: submissionDetail.env_problem, icon: ImageIcon },
-                                                { label: "Masalah Sosial", val: submissionDetail.social_problem, icon: Users },
-                                                { label: "Solusi Kreatif", val: submissionDetail.solution, icon: Target },
-                                                { label: "Alasan Solusi", val: submissionDetail.solution_reason, icon: FileText },
-                                                { label: "Jenis Aksi", val: submissionDetail.action_type, icon: Briefcase },
-                                                { label: "Nama Aksi", val: submissionDetail.action_name, icon: Target },
-                                                { label: "Bahan & Alat", val: submissionDetail.materials, icon: ImageIcon },
-                                                { label: "Target Audience", val: submissionDetail.target_audience, icon: Users },
-                                            ].map((item, i) => (
-                                                <div key={i} className="p-5 rounded-[2rem] bg-white border border-[#1A5C0A]/5 shadow-sm">
-                                                    <div className="flex items-center gap-2 mb-3">
-                                                        <item.icon size={14} className="text-[#1A5C0A]/40" />
-                                                        <h4 className="text-[10px] font-black text-[#1A5C0A] uppercase tracking-widest">{item.label}</h4>
-                                                    </div>
-                                                    <p className="text-sm text-[#333333] leading-relaxed font-medium">{item.val}</p>
+                            submissionDetail ? (
+                                <div className="space-y-6">
+                                    {selectedMission === 1 ? (
+                                        <div className="space-y-4">
+                                            <div className="bg-white p-5 rounded-2xl border border-[#1A5C0A]/10 shadow-sm flex items-start gap-4">
+                                                <div className="w-10 h-10 rounded-xl bg-[#B4FF9F]/30 flex items-center justify-center shrink-0">
+                                                    <Target className="w-5 h-5 text-[#1A5C0A]" />
                                                 </div>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {selectedMission === 3 && submissionDetail.tasks && (
-                                        <div className="space-y-3">
-                                            {submissionDetail.tasks.map((task: any, i: number) => (
-                                                <div key={i} className="p-4 rounded-2xl bg-white border border-[#1A5C0A]/5 flex items-center justify-between shadow-sm">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", task.status === "selesai" ? "bg-[#B4FF9F] text-[#1A5C0A]" : "bg-gray-100 text-gray-400")}>
-                                                            {task.status === "selesai" ? <CheckCircle size={20} /> : <Clock size={20} />}
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="text-sm font-bold text-[#333333]">{task.title}</h4>
-                                                            <p className="text-[10px] font-bold text-[#1A5C0A] uppercase tracking-widest">PJ: {task.user?.full_name}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <span className={cn("text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full", task.status === "selesai" ? "bg-[#B4FF9F]/20 text-[#1A5C0A]" : "bg-gray-100 text-gray-400")}>
-                                                            {task.status}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {selectedMission === 4 && submissionDetail.files && (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                            {submissionDetail.files.map((file: any, i: number) => (
-                                                <div key={i} className="group relative bg-white rounded-[2.5rem] overflow-hidden border border-[#1A5C0A]/10 shadow-lg hover:shadow-2xl transition-all duration-500">
-                                                    <div className="aspect-square relative overflow-hidden">
-                                                        {file.media_type === "image" ? (
-                                                            <img src={file.cloudinary_url} alt={file.caption} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                                                        ) : (
-                                                            <div className="w-full h-full bg-[#1A5C0A] flex flex-col items-center justify-center gap-3 text-[#B4FF9F]">
-                                                                <VideoIcon size={48} />
-                                                                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Video Submission</span>
-                                                            </div>
-                                                        )}
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6">
-                                                            <p className="text-white text-xs font-medium leading-relaxed italic">"{file.caption}"</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="p-5 border-t border-[#1A5C0A]/5 bg-white flex items-center justify-between">
-                                                        <div className="flex items-center gap-2">
-                                                            {file.media_type === "image" ? <ImageIcon size={14} className="text-[#1A5C0A]" /> : <VideoIcon size={14} className="text-[#1A5C0A]" />}
-                                                            <span className="text-[10px] font-black uppercase tracking-widest text-[#1A5C0A]">{file.media_type}</span>
-                                                        </div>
-                                                        <a href={file.cloudinary_url} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-lg bg-[#B4FF9F] flex items-center justify-center text-[#1A5C0A] hover:bg-[#1A5C0A] hover:text-[#B4FF9F] transition-all shadow-sm">
-                                                            <ExternalLink size={14} />
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            )
-                        ) : (
-                            /* TEAM DETAILS VIEW */
-                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="p-6 rounded-[2.5rem] bg-white border border-[#1A5C0A]/10 shadow-sm flex items-center gap-4">
-                                        <div className="w-14 h-14 bg-[#B4FF9F] rounded-2xl flex items-center justify-center text-[#1A5C0A]"><Users size={28} /></div>
-                                        <div>
-                                            <h4 className="text-[10px] font-black text-[#1A5C0A]/40 uppercase tracking-widest mb-1">Nama Tim</h4>
-                                            <p className="text-xl font-black text-[#333333]">{teamDetail?.name}</p>
-                                        </div>
-                                    </div>
-                                    <div className="p-6 rounded-[2.5rem] bg-white border border-[#1A5C0A]/10 shadow-sm flex items-center gap-4">
-                                        <div className="w-14 h-14 bg-[#F9FFA4] rounded-2xl flex items-center justify-center text-[#7A7200]"><Target size={28} /></div>
-                                        <div>
-                                            <h4 className="text-[10px] font-black text-[#7A7200]/40 uppercase tracking-widest mb-1">Topik Fokus</h4>
-                                            <p className="text-xl font-black text-[#333333] capitalize">{teamDetail?.selected_case}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <h4 className="text-[11px] font-black text-[#333333]/40 uppercase tracking-[0.2em] px-2">Anggota Kesatuan ({teamDetail?.team_members?.length || 0})</h4>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        {teamDetail?.team_members?.map((member: any, i: number) => (
-                                            <div key={i} className="p-4 rounded-2xl bg-white border border-[#1A5C0A]/5 flex items-center gap-4 shadow-sm">
-                                                <Avatar className="w-12 h-12 border-2 border-[#1A5C0A]/5">
-                                                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.users?.full_name}`} />
-                                                    <AvatarFallback className="bg-[#B4FF9F] text-[#1A5C0A] font-bold">{member.users?.full_name?.substring(0, 2).toUpperCase()}</AvatarFallback>
-                                                </Avatar>
                                                 <div>
-                                                    <h5 className="text-sm font-bold text-[#333333]">{member.users?.full_name}</h5>
-                                                    <p className="text-[10px] font-bold text-[#1A5C0A]/60 uppercase tracking-widest">ID: {member.student_id.split('-')[0]}</p>
+                                                    <p className="text-[10px] font-bold text-[#1A5C0A] uppercase tracking-widest mb-1">Kasus yang Dipilih</p>
+                                                    <p className="text-sm font-bold text-[#333333] capitalize">{(submissionDetail as Mission1Detail).case_topic?.replace(/_/g, ' ') || "-"}</p>
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
+
+                                            <div className="bg-[#FFFDF1] p-5 rounded-2xl border border-[#7A7200]/10 shadow-sm">
+                                                <p className="text-[10px] font-bold text-[#7A7200] uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-[#7A7200]" />
+                                                    Perspektif Lingkungan
+                                                </p>
+                                                <p className="text-sm text-gray-700 leading-relaxed font-medium whitespace-pre-wrap">{(submissionDetail as Mission1Detail).perspective_env || "-"}</p>
+                                            </div>
+
+                                            <div className="bg-[#F4F9FF] p-5 rounded-2xl border border-[#004A7A]/10 shadow-sm">
+                                                <p className="text-[10px] font-bold text-[#004A7A] uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-[#004A7A]" />
+                                                    Perspektif Sosial
+                                                </p>
+                                                <p className="text-sm text-gray-700 leading-relaxed font-medium whitespace-pre-wrap">{(submissionDetail as Mission1Detail).perspective_soc || "-"}</p>
+                                            </div>
+
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center mt-6">
+                                                Dikirim pada: {new Date((submissionDetail as Mission1Detail).created_at || "").toLocaleString("id-ID", { dateStyle: 'long', timeStyle: 'short' })}
+                                            </p>
+                                        </div>
+                                    ) : selectedMission === 2 ? (
+                                        <div className="space-y-4">
+                                            <div className="bg-[#F4F9FF] p-5 rounded-2xl border border-[#004A7A]/10 shadow-sm">
+                                                <p className="text-[10px] font-bold text-[#004A7A] uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-[#004A7A]" /> Masalah Lingkungan
+                                                </p>
+                                                <p className="text-sm text-gray-700 leading-relaxed font-medium whitespace-pre-wrap">{(submissionDetail as Mission2Detail).env_problem || "-"}</p>
+                                            </div>
+                                            <div className="bg-[#FFFDF1] p-5 rounded-2xl border border-[#7A7200]/10 shadow-sm">
+                                                <p className="text-[10px] font-bold text-[#7A7200] uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-[#7A7200]" /> Masalah Sosial
+                                                </p>
+                                                <p className="text-sm text-gray-700 leading-relaxed font-medium whitespace-pre-wrap">{(submissionDetail as Mission2Detail).social_problem || "-"}</p>
+                                            </div>
+                                            <div className="bg-[#F7FFF4] p-5 rounded-2xl border border-[#1A5C0A]/10 shadow-sm">
+                                                <p className="text-[10px] font-bold text-[#1A5C0A] uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-[#1A5C0A]" /> Solusi: {(submissionDetail as Mission2Detail).action_name || "-"} ({(submissionDetail as Mission2Detail).action_type || "-"})
+                                                </p>
+                                                <p className="text-sm text-gray-700 leading-relaxed font-medium whitespace-pre-wrap mb-3">{(submissionDetail as Mission2Detail).solution || "-"}</p>
+                                                <p className="text-[10px] font-bold text-[#1A5C0A]/60 uppercase tracking-widest mb-1">Alasan</p>
+                                                <p className="text-sm text-gray-700 leading-relaxed font-medium whitespace-pre-wrap">{(submissionDetail as Mission2Detail).solution_reason || "-"}</p>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Alat & Bahan</p>
+                                                    <p className="text-xs font-bold text-gray-700">{(submissionDetail as Mission2Detail).materials || "-"}</p>
+                                                </div>
+                                                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Target Sasaran</p>
+                                                    <p className="text-xs font-bold text-gray-700">{(submissionDetail as Mission2Detail).target_audience || "-"}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : selectedMission === 3 ? (
+                                        <div className="space-y-4">
+                                            <h4 className="text-[10px] font-black text-[#1A5C0A] uppercase tracking-widest mb-2 px-2">Jadwal & Tugas Tim</h4>
+                                            {((submissionDetail as Mission3Detail).tasks || []).length > 0 ? (
+                                                <div className="grid grid-cols-1 gap-3">
+                                                    {((submissionDetail as Mission3Detail).tasks || []).map((task, idx) => (
+                                                        <div key={task.id || idx} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between gap-4">
+                                                            <div>
+                                                                <p className="text-sm font-bold text-[#333333]">{task.title}</p>
+                                                                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#1A5C0A]/40" />
+                                                                    {task.user?.full_name || "Anggota Tim"} • {new Date(task.scheduled_date).toLocaleDateString("id-ID")}
+                                                                </p>
+                                                            </div>
+                                                            <div className={cn("px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest shrink-0", 
+                                                                task.status === "selesai" ? "bg-[#B4FF9F]/30 text-[#1A5C0A]" : "bg-[#F9FFA4]/30 text-[#7A7200]"
+                                                            )}>
+                                                                {task.status}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="text-center p-8 bg-gray-50 rounded-2xl border border-gray-100">
+                                                    <p className="text-sm font-medium text-gray-400">Belum ada tugas yang dijadwalkan</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : selectedMission === 4 ? (
+                                        <div className="space-y-4">
+                                            <h4 className="text-[10px] font-black text-[#1A5C0A] uppercase tracking-widest mb-2 px-2">Dokumentasi Aksi</h4>
+                                            {((submissionDetail as Mission4Detail).files || []).length > 0 ? (
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    {((submissionDetail as Mission4Detail).files || []).map((file, idx) => (
+                                                        <div key={file.id || idx} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                                                            {file.media_type === "foto" ? (
+                                                                <div className="aspect-video relative bg-gray-100">
+                                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                    <img src={file.cloudinary_url} alt="Dokumentasi" className="w-full h-full object-cover" />
+                                                                </div>
+                                                            ) : file.media_type === "video" ? (
+                                                                <div className="aspect-video relative bg-gray-100 flex items-center justify-center">
+                                                                    <PlayCircle className="w-8 h-8 text-white drop-shadow-md absolute z-10" />
+                                                                    <video src={file.cloudinary_url} className="w-full h-full object-cover" />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="aspect-video relative bg-gray-100 flex items-center justify-center flex-col gap-2">
+                                                                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">📄</div>
+                                                                    <span className="text-[10px] font-bold text-gray-500">Dokumen Pendukung</span>
+                                                                </div>
+                                                            )}
+                                                            {file.caption && (
+                                                                <div className="p-3 bg-white">
+                                                                    <p className="text-xs text-gray-600 line-clamp-2">{file.caption}</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="text-center p-8 bg-gray-50 rounded-2xl border border-gray-100">
+                                                    <p className="text-sm font-medium text-gray-400">Belum ada dokumentasi yang diunggah</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="p-6 bg-white rounded-3xl border border-[#1A5C0A]/5 shadow-sm">
+                                            <h4 className="text-[10px] font-black text-[#1A5C0A] uppercase tracking-widest mb-2">Detail Submission (Mentah)</h4>
+                                            <pre className="text-xs whitespace-pre-wrap font-medium text-gray-600 leading-relaxed overflow-x-auto">
+                                                {JSON.stringify(submissionDetail, null, 2)}
+                                            </pre>
+                                        </div>
+                                    )}
                                 </div>
+                            ) : <p className="text-center text-gray-400 italic py-10">Belum ada submission</p>
+                        ) : (
+                            /* Team View */
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {teamDetail?.team_members?.map((m, i) => (
+                                    <div key={i} className="p-4 bg-white rounded-2xl border border-[#1A5C0A]/5 flex items-center gap-3 shadow-sm">
+                                        <Avatar className="w-10 h-10"><AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${m.users?.full_name}`} /><AvatarFallback>ST</AvatarFallback></Avatar>
+                                        <span className="text-sm font-bold text-[#333333]">{m.users?.full_name}</span>
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </div>
 
-                    <DrawerFooter className="bg-white/80 backdrop-blur-md px-8 py-6 rounded-b-[3rem] border-t border-[#1A5C0A]/5">
-                        <DrawerClose asChild>
-                            <Button variant="outline" className="w-full h-12 rounded-2xl border-[#1A5C0A]/10 font-black uppercase tracking-[0.2em] text-[10px] text-[#1A5C0A] hover:bg-[#1A5C0A] hover:text-white transition-all shadow-sm cursor-pointer">
-                                Tutup {drawerType === 'MISSION' ? 'Laporan' : 'Info Tim'}
-                            </Button>
-                        </DrawerClose>
-                    </DrawerFooter>
+                    <div className="p-8 border-t border-[#1A5C0A]/5 bg-white/80 backdrop-blur-md rounded-b-[3rem]">
+                        <Button onClick={() => setDrawerType(null)} className="w-full h-12 rounded-2xl bg-[#1A5C0A] text-white font-black text-[10px] uppercase tracking-widest cursor-pointer">Tutup</Button>
+                    </div>
                 </DrawerContent>
             </Drawer>
-        </div>
+        </div >
     );
 }

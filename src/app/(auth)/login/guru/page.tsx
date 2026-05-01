@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
+import Link from "next/link";
 import { guruLoginSchema, type GuruLoginInput } from "@/lib/validations/auth";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import EntranceOverlay from "@/components/shared/EntranceOverlay";
 
 export default function LoginGuruPage() {
   const router = useRouter();
@@ -47,7 +47,13 @@ export default function LoginGuruPage() {
       }
 
       loginUser(result.data.user);
-      router.push("/guru/dashboard");
+
+      // Redirect berdasarkan role
+      if (result.data.user.role === "admin") {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/guru/dashboard");
+      }
     } catch {
       setServerError("Tidak dapat terhubung ke server");
     } finally {
@@ -57,7 +63,6 @@ export default function LoginGuruPage() {
 
   return (
     <div className="w-full max-w-md">
-      {/* <EntranceOverlay variant="guru" /> */}
       {/* Logo area */}
       <div className="text-center mb-6">
         <h1 className="text-4xl font-extrabold text-[#333333]">
@@ -153,6 +158,13 @@ export default function LoginGuruPage() {
             )}
             {loading ? "Memproses..." : "Masuk"}
           </Button>
+
+          <p className="text-center mt-8 text-sm text-gray-400 font-medium">
+            Belum punya akun?{" "}
+            <Link href="/register/guru" className="text-[#1A5C0A] font-bold hover:underline">
+              Daftar di sini
+            </Link>
+          </p>
         </form>
       </div>
     </div>

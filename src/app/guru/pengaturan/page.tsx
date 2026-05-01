@@ -4,42 +4,55 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { 
     User, 
-    Mail, 
     Lock, 
-    Camera, 
     Save, 
     Loader2, 
     ShieldCheck, 
-    Bell,
-    LogOut,
     ChevronRight,
-    Settings as SettingsIcon,
-    ArrowLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 export default function TeacherSettingsPage() {
-    const { user, logout } = useAuth();
-    const router = useRouter();
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [activeSection, setActiveSection] = useState<"profile" | "security">("profile");
 
     const [formData, setFormData] = useState({
         full_name: "",
+        username: "",
         currentPassword: "",
         newPassword: "",
         confirmPassword: ""
     });
 
     useEffect(() => {
-        if (user) {
-            setFormData(prev => ({
-                ...prev,
-                full_name: user.user_metadata?.full_name || user.full_name || "",
-            }));
+        if (user?.id) {
+            fetch(`/api/guru/profile?user_id=${user.id}`)
+                .then(res => res.json())
+                .then(result => {
+                    if (result.data) {
+                        setFormData(prev => ({
+                            ...prev,
+                            full_name: result.data.full_name || "",
+                            username: result.data.username || "",
+                        }));
+                    } else {
+                        setFormData(prev => ({
+                            ...prev,
+                            full_name: (user.user_metadata?.full_name as string) || (user.full_name as string) || "",
+                            username: user.username || "",
+                        }));
+                    }
+                })
+                .catch(() => {
+                    setFormData(prev => ({
+                        ...prev,
+                        full_name: (user.user_metadata?.full_name as string) || (user.full_name as string) || "",
+                        username: user.username || "",
+                    }));
+                });
         }
     }, [user]);
 
@@ -52,6 +65,7 @@ export default function TeacherSettingsPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     full_name: formData.full_name,
+                    username: formData.username,
                     user_id: user?.id
                 })
             });
@@ -64,7 +78,7 @@ export default function TeacherSettingsPage() {
                 const data = await res.json();
                 toast.error(data.error || "Gagal memperbarui profil");
             }
-        } catch (err) {
+        } catch {
             toast.error("Terjadi kesalahan koneksi");
         } finally {
             setLoading(false);
@@ -84,7 +98,8 @@ export default function TeacherSettingsPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    new_password: formData.newPassword
+                    new_password: formData.newPassword,
+                    user_id: user?.id
                 })
             });
 
@@ -97,7 +112,7 @@ export default function TeacherSettingsPage() {
                 const data = await res.json();
                 toast.error(data.error || "Gagal mengubah password");
             }
-        } catch (err) {
+        } catch {
             toast.error("Terjadi kesalahan koneksi");
         } finally {
             setLoading(false);
@@ -116,20 +131,12 @@ export default function TeacherSettingsPage() {
                         Kelola informasi profil dan keamanan akun Anda
                     </p>
                 </div>
-                
-                <Button 
-                    variant="outline" 
-                    onClick={() => logout()}
-                    className="rounded-2xl border-2 border-red-100 hover:bg-red-50 hover:text-red-500 text-red-400 font-black text-[10px] uppercase tracking-widest h-12 px-8 transition-all cursor-pointer"
-                >
-                    <LogOut className="w-4 h-4 mr-2" /> Keluar dari Sistem
-                </Button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-10">
                 {/* Sidebar Navigation */}
                 <div className="lg:col-span-4 space-y-4">
-                    <div className="bg-white rounded-2xl border border-[#1A5C0A]/10 p-4 shadow-sm overflow-hidden">
+                    <div className="bg-white rounded-2xl border border-[#1A5C0A]/10 p-2 md:p-4 shadow-sm overflow-hidden">
                         <button 
                             onClick={() => setActiveSection("profile")}
                             className={cn(
@@ -151,7 +158,7 @@ export default function TeacherSettingsPage() {
                                     <p className={cn(
                                         "text-[9px] font-bold",
                                         activeSection === "profile" ? "text-white/60" : "text-[#333333]/30"
-                                    )}>Nama & Email</p>
+                                    )}>Nama & Username</p>
                                 </div>
                             </div>
                             <ChevronRight className={cn("w-4 h-4 opacity-40", activeSection === "profile" && "rotate-90")} />
@@ -191,7 +198,7 @@ export default function TeacherSettingsPage() {
                     <div className="bg-white rounded-2xl border border-[#1A5C0A]/10 shadow-sm overflow-hidden relative min-h-[500px]">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-[#B4FF9F]/10 rounded-full -mr-32 -mt-32" />
                         
-                        <div className="p-10 md:p-14 relative z-10">
+                        <div className="p-6 md:p-14 relative z-10">
                             {activeSection === "profile" ? (
                                 <form onSubmit={handleUpdateProfile} className="space-y-10">
                                     <div className="flex items-center gap-4 mb-4">
@@ -200,22 +207,6 @@ export default function TeacherSettingsPage() {
                                     </div>
 
                                     <div className="space-y-6">
-                                        {/* Avatar Section */}
-                                        <div className="flex items-center gap-8 pb-4">
-                                            <div className="relative group">
-                                                <div className="w-24 h-24 rounded-2xl bg-[#F7FFF4] border-4 border-white shadow-xl flex items-center justify-center overflow-hidden ring-4 ring-[#1A5C0A]/5 transition-transform group-hover:scale-105 duration-500">
-                                                    <User className="w-10 h-10 text-[#1A5C0A]/30" />
-                                                </div>
-                                                <button type="button" className="absolute -bottom-2 -right-2 w-10 h-10 bg-[#1A5C0A] rounded-xl border-4 border-white text-white flex items-center justify-center shadow-lg hover:scale-110 transition-all cursor-pointer">
-                                                    <Camera className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                            <div>
-                                                <h3 className="font-black text-[#333333] text-lg leading-tight uppercase tracking-tight">Foto Profil</h3>
-                                                <p className="text-[10px] text-[#333333]/40 font-bold uppercase tracking-widest mt-1">Hanya format JPG, PNG atau WEBP. Maks 2MB.</p>
-                                            </div>
-                                        </div>
-
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                                             <div className="space-y-2">
                                                 <label className="text-[10px] font-black text-[#333333]/40 uppercase tracking-widest px-1">Nama Lengkap</label>
@@ -230,16 +221,31 @@ export default function TeacherSettingsPage() {
                                                     />
                                                 </div>
                                             </div>
+
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-[#333333]/40 uppercase tracking-widest px-1">Username</label>
+                                                <div className="relative">
+                                                    <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1A5C0A]/40" />
+                                                    <input 
+                                                        type="text" 
+                                                        value={formData.username}
+                                                        onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                                                        className="w-full h-14 pl-12 pr-6 rounded-2xl border-2 border-[#1A5C0A]/5 bg-[#F7FFF4]/50 text-sm font-bold text-[#333333] focus:outline-none focus:border-[#1A5C0A] focus:bg-white transition-all shadow-inner"
+                                                        placeholder="Masukkan username"
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="pt-8 border-t border-[#1A5C0A]/5">
+                                    <div className="flex justify-end pt-4">
                                         <Button 
+                                            type="submit" 
                                             disabled={loading}
-                                            className="rounded-2xl border-none bg-[#1A5C0A] hover:bg-[#1A5C0A]/90 text-white font-black text-[10px] uppercase tracking-widest h-14 px-10 shadow-xl shadow-[#1A5C0A]/20 transition-all cursor-pointer"
+                                            className="w-full md:w-auto h-14 px-10 rounded-2xl bg-[#1A5C0A] hover:bg-[#1A5C0A]/90 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-[#1A5C0A]/20 transition-all active:scale-95 flex items-center justify-center gap-3 cursor-pointer"
                                         >
-                                            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                                            Simpan Perubahan Profil
+                                            {loading ? <Loader2 className="animate-spin" size={20} /> : <Save className="w-5 h-5" />}
+                                            Simpan Perubahan
                                         </Button>
                                     </div>
                                 </form>
@@ -291,13 +297,14 @@ export default function TeacherSettingsPage() {
                                         </div>
                                     </div>
 
-                                    <div className="pt-8 border-t border-[#1A5C0A]/5">
+                                    <div className="flex justify-end pt-4">
                                         <Button 
+                                            type="submit" 
                                             disabled={loading}
-                                            className="rounded-2xl bg-[#1A5C0A] hover:bg-[#1A5C0A]/90 text-white font-black text-[10px] uppercase tracking-widest h-14 px-10 shadow-xl shadow-[#1A5C0A]/20 transition-all cursor-pointer"
+                                            className="w-full md:w-auto h-14 px-10 rounded-2xl bg-[#1A5C0A] hover:bg-[#1A5C0A]/90 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-[#1A5C0A]/20 transition-all active:scale-95 flex items-center justify-center gap-3 cursor-pointer"
                                         >
-                                            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                                            Simpan Password Baru
+                                            {loading ? <Loader2 className="animate-spin" size={20} /> : <Save className="w-5 h-5" />}
+                                            Simpan Password
                                         </Button>
                                     </div>
                                 </form>

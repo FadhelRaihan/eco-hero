@@ -1,35 +1,66 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
+export async function GET(request: Request) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const userId = searchParams.get("user_id");
+        if (!userId) {
+            return NextResponse.json({ error: "Data pengguna tidak ditemukan" }, { status: 400 });
+        }
+
+        const supabase = createAdminClient();
+        const { data, error } = await supabase
+            .from("users")
+            .select("full_name, username")
+            .eq("id", userId)
+            .single();
+
+        if (error) throw error;
+        return NextResponse.json({ data });
+    } catch (err) {
+        console.error("Profile Fetch Error:", err);
+        return NextResponse.json({ error: "Gagal mengambil profil" }, { status: 500 });
+    }
+}
+
 export async function PUT(request: Request) {
     try {
-        const { full_name, user_id } = await request.json();
+        const { full_name, username, user_id } = await request.json();
 
-        if (!user_id || !full_name) {
-            return NextResponse.json({ error: "User ID dan Nama Lengkap diperlukan" }, { status: 400 });
+        if (!user_id || !full_name || !username) {
+            return NextResponse.json({ error: "Data profil tidak lengkap" }, { status: 400 });
         }
 
         const supabase = createAdminClient();
 
-        // Update di tabel users (jika ada)
+        // 1. Cek apakah username baru sudah digunakan oleh user lain
+        const { data: existingUser, error: checkError } = await supabase
+            .from("users")
+            .select("id")
+            .eq("username", username)
+            .neq("id", user_id)
+            .single();
+
+        if (checkError && checkError.code !== "PGRST116") {
+            throw checkError;
+        }
+
+        if (existingUser) {
+            return NextResponse.json({ error: "Username sudah digunakan" }, { status: 400 });
+        }
+
+        // 2. Update di tabel users
         const { error: userError } = await supabase
             .from("users")
-            .update({ full_name })
+            .update({ full_name, username })
             .eq("id", user_id);
 
         if (userError) throw userError;
 
-        // Update di Auth Metadata
-        const { error: authError } = await supabase.auth.admin.updateUserById(
-            user_id,
-            { user_metadata: { full_name } }
-        );
-
-        if (authError) throw authError;
-
         return NextResponse.json({ message: "Profil berhasil diperbarui" });
-    } catch (err: any) {
+    } catch (err) {
         console.error("Profile Update Error:", err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return NextResponse.json({ error: "Gagal memperbarui profil" }, { status: 500 });
     }
 }

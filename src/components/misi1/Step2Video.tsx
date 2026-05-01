@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, ChevronRight, ChevronLeft, Check, PlayCircle } from "lucide-react";
+import { ChevronRight, ChevronLeft, Check, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CaseTopic, MISSION_1_DATA, MaterialBlock } from "@/lib/mission-data";
+import { CaseTopic, MISSION_1_DATA } from "@/lib/mission-data";
 import Image from "next/image";
 
 interface Step2VideoProps {
@@ -15,7 +15,6 @@ interface Step2VideoProps {
 
 export default function Step2Video({
     caseTopic,
-    isCompleted,
     onComplete,
     onLanjut,
 }: Step2VideoProps) {
@@ -100,84 +99,87 @@ export default function Step2Video({
                     )}
 
                     {currentBlock.type === "video" && (
-                        <div className="flex-1 min-h-0 rounded-2xl overflow-hidden border-2 border-[#1A5C0A] bg-black relative shadow-lg">
+                        <div className={cn(
+                            "rounded-2xl overflow-hidden border-2 border-[#1A5C0A] bg-black relative shadow-lg mx-auto w-full flex-shrink-0",
+                            currentBlock.videoUrl?.includes("shorts/") ? "max-w-[320px] aspect-[9/16]" : "aspect-video max-w-4xl"
+                        )}>
                             {videoPlaying ? (
                                 <iframe
                                     src={`https://www.youtube.com/embed/${getYoutubeId(currentBlock.videoUrl!)}?autoplay=1`}
-                                    className="w-full h-full"
+                                    className="absolute inset-0 w-full h-full"
                                     allow="autoplay; encrypted-media"
                                     allowFullScreen
                                 />
                             ) : (
                                 <div 
-                                    className="w-full h-full flex flex-col items-center justify-center cursor-pointer group"
+                                    className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer group"
                                     onClick={() => setVideoPlaying(true)}
                                 >
-                                    <PlayCircle className="w-16 h-16 text-white group-hover:scale-110 transition-transform" />
-                                    <p className="text-white font-bold mt-4 text-sm opacity-80">Klik untuk putar video</p>
+                                    <PlayCircle className="w-16 h-16 text-white group-hover:scale-110 transition-transform shadow-sm rounded-full bg-black/20" />
+                                    <p className="text-white font-bold mt-4 text-sm opacity-90 drop-shadow-md">Klik untuk memutar</p>
                                 </div>
                             )}
                         </div>
                     )}
 
                     {currentBlock.type === "comic" && (
-                        <div className="flex-1 flex flex-col gap-3 min-h-0 overflow-hidden">
-                            <div className="relative group/comic flex-1 min-h-0">
-                                <div className="relative w-full h-full rounded-2xl overflow-hidden border-4 border-[#1A5C0A]/10 bg-white">
-                                    <Image 
-                                        src={currentBlock.images![currentComicPage]} 
-                                        alt={`Komik Halaman ${currentComicPage + 1}`} 
-                                        fill 
-                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
-                                        className="object-contain transition-all duration-700"
-                                        unoptimized
-                                        key={`${currentBlockIndex}-${currentComicPage}`}
-                                    />
-                                    
-                                    {/* Overlay Touch Areas */}
-                                    <div 
-                                        className="absolute left-0 top-0 bottom-0 w-1/4 z-10 cursor-w-resize" 
-                                        onClick={handleComicBack}
-                                    />
-                                    <div 
-                                        className="absolute right-0 top-0 bottom-0 w-1/4 z-10 cursor-e-resize" 
-                                        onClick={handleComicNext}
-                                    />
-                                </div>
+                        <div className="flex flex-col gap-3 h-[65vh] min-h-[450px] w-full max-w-3xl mx-auto flex-shrink-0">
+                            <div className="relative flex-1 rounded-2xl overflow-hidden border-4 border-[#1A5C0A]/10 bg-[#f8f9fa] shadow-inner">
+                                <Image 
+                                    src={currentBlock.images![currentComicPage]} 
+                                    alt={`Komik Halaman ${currentComicPage + 1}`} 
+                                    fill 
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+                                    className="object-contain transition-all duration-700"
+                                    unoptimized
+                                    key={`${currentBlockIndex}-${currentComicPage}`}
+                                />
+                                
+                                {/* Overlay Touch Areas */}
+                                <div 
+                                    className="absolute left-0 top-0 bottom-0 w-1/4 z-10 cursor-w-resize" 
+                                    onClick={handleComicBack}
+                                />
+                                <div 
+                                    className="absolute right-0 top-0 bottom-0 w-1/4 z-10 cursor-e-resize" 
+                                    onClick={handleComicNext}
+                                />
                             </div>
 
                             {/* Dedicated Comic Navigation Bar */}
-                            <div className="flex items-center justify-between bg-[#B4FF9F]/20 p-1.5 rounded-2xl border-2 border-[#1A5C0A]/10 shrink-0">
-                                <button 
-                                    onClick={handleComicBack}
-                                    disabled={currentComicPage === 0}
-                                    className="flex items-center gap-1 px-4 py-2 rounded-xl font-bold text-xs bg-white text-[#1A5C0A] border border-[#1A5C0A]/20 shadow-sm disabled:opacity-30 disabled:grayscale transition-all active:scale-95"
-                                >
-                                    <ChevronLeft size={16} /> Sebelumnya
-                                </button>
-
-                                <div className="flex flex-col items-center">
-                                    <span className="text-[10px] font-black text-[#1A5C0A]/60 uppercase tracking-widest mb-1">Halaman</span>
-                                    <div className="flex gap-1.5">
+                            <div className="flex flex-col sm:flex-row items-center justify-between bg-[#B4FF9F]/20 p-3 sm:p-2 rounded-2xl border-2 border-[#1A5C0A]/10 shrink-0 gap-3 sm:gap-2">
+                                <div className="flex flex-col items-center order-first sm:order-none w-full sm:w-auto px-2">
+                                    <span className="text-[10px] font-black text-[#1A5C0A]/60 uppercase tracking-widest mb-1.5">Halaman</span>
+                                    <div className="flex flex-wrap justify-center gap-1.5">
                                         {currentBlock.images?.map((_, idx) => (
                                             <div 
                                                 key={idx}
                                                 className={cn(
                                                     "h-1.5 rounded-full transition-all duration-300",
-                                                    idx === currentComicPage ? "w-6 bg-[#1A5C0A]" : "w-1.5 bg-[#1A5C0A]/20"
+                                                    idx === currentComicPage ? "w-6 bg-[#1A5C0A]" : "w-1.5 bg-[#1A5C0A]/30"
                                                 )}
                                             />
                                         ))}
                                     </div>
                                 </div>
 
-                                <button 
-                                    onClick={handleComicNext}
-                                    disabled={currentComicPage === (currentBlock.images?.length || 0) - 1}
-                                    className="flex items-center gap-1 px-4 py-2 rounded-xl font-bold text-xs bg-[#1A5C0A] text-white shadow-sm disabled:opacity-30 disabled:grayscale transition-all active:scale-95"
-                                >
-                                    Berikutnya <ChevronRight size={16} />
-                                </button>
+                                <div className="flex items-center justify-between w-full sm:w-auto order-last sm:order-none gap-2">
+                                    <button 
+                                        onClick={handleComicBack}
+                                        disabled={currentComicPage === 0}
+                                        className="flex-1 sm:flex-none flex justify-center items-center gap-1 px-4 py-2.5 sm:py-2 rounded-xl font-bold text-xs bg-white text-[#1A5C0A] border border-[#1A5C0A]/20 shadow-sm disabled:opacity-30 disabled:grayscale transition-all active:scale-95"
+                                    >
+                                        <ChevronLeft size={16} /> Sebelumnya
+                                    </button>
+
+                                    <button 
+                                        onClick={handleComicNext}
+                                        disabled={currentComicPage === (currentBlock.images?.length || 0) - 1}
+                                        className="flex-1 sm:flex-none flex justify-center items-center gap-1 px-4 py-2.5 sm:py-2 rounded-xl font-bold text-xs bg-[#1A5C0A] text-white shadow-sm disabled:opacity-30 disabled:grayscale transition-all active:scale-95"
+                                    >
+                                        Berikutnya <ChevronRight size={16} />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -202,7 +204,7 @@ export default function Step2Video({
                 <button
                     onClick={handleNext}
                     className={cn(
-                        "flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-md",
+                        "flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-md",
                         isLastBlock
                             ? "bg-[#1A5C0A] text-white hover:bg-[#134407]"
                             : "bg-[#B4FF9F] text-[#1A5C0A] border-2 border-[#1A5C0A] hover:bg-[#9AEF85]"

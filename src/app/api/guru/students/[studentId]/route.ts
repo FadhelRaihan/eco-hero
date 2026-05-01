@@ -48,8 +48,37 @@ export async function DELETE(
         }
 
         return NextResponse.json({ message: "Siswa berhasil dihapus dari kelas" });
-    } catch (err: any) {
+    } catch (err) {
         console.error("Error deleting student:", err);
         return NextResponse.json({ error: "Gagal menghapus siswa" }, { status: 500 });
+    }
+}
+
+export async function PATCH(
+    request: NextRequest,
+    { params }: { params: Promise<{ studentId: string }> }
+) {
+    try {
+        const { studentId } = await params;
+        const body = await request.json();
+        const { full_name } = body;
+
+        if (!full_name) {
+            return NextResponse.json({ error: "Nama lengkap wajib diisi" }, { status: 400 });
+        }
+
+        const supabase = createAdminClient();
+
+        const { error } = await supabase
+            .from("users")
+            .update({ full_name })
+            .eq("id", studentId);
+
+        if (error) throw error;
+
+        return NextResponse.json({ message: "Nama siswa berhasil diperbarui" });
+    } catch (err) {
+        console.error("Error updating student:", err);
+        return NextResponse.json({ error: "Gagal memperbarui nama siswa" }, { status: 500 });
     }
 }

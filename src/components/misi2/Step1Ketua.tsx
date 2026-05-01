@@ -5,7 +5,6 @@ import { Bot, Crown, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Lokasi1 from "@/assets/Lokasi1.png";
 import Lokasi2 from "@/assets/Lokasi2.png";
-import Lokasi3 from "@/assets/Lokasi3.png";
 import { cn } from "@/lib/utils";
 
 import { CaseTopic, MISSION_1_DATA } from "@/lib/mission-data";
@@ -64,7 +63,6 @@ interface Step1KetuaProps {
 }
 
 export default function Step1Ketua({
-    studentId,
     onDecide,
     onCreateTeam,
     loading,
@@ -162,8 +160,8 @@ export default function Step1Ketua({
                                             : "Kasus yang dipilih"}
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-1.5 bg-[#FCFEBA] text-[#7A6A00] text-xs font-bold px-3 py-1.5 rounded-full" >
-                                    <Crown size={12} className="text-[#FFB800]" />
+                                <div className="flex items-center text-center gap-1.5 bg-[#FCFEBA] text-[#7A6A00] text-xs font-bold px-3 py-1.5 rounded-full" >
+                                    <Crown size={12} className="text-[#FFB800] hidden md:block" />
                                     Ketua Tim
                                 </div>
                             </div>

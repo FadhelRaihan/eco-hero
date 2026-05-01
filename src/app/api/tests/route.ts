@@ -4,20 +4,19 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
-        const classId = searchParams.get("classId");
         const type = searchParams.get("type") as "pretest" | "posttest";
 
-        if (!classId || !type) {
-            return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
+        if (!type) {
+            return NextResponse.json({ error: "Missing type parameter" }, { status: 400 });
         }
 
         const supabase = createAdminClient();
 
-        // 1. Fetch the active test for this class and type
+        // 1. Fetch the active test for this type (GLOBAL TEST -> class_id is null)
         const { data: test, error: testError } = await supabase
             .from("tests")
             .select("*")
-            .eq("class_id", classId)
+            .is("class_id", null)
             .eq("type", type)
             .eq("is_active", true)
             .single();
@@ -42,13 +41,11 @@ export async function GET(request: NextRequest) {
             { data: { ...test, questions } },
             {
                 headers: {
-                    // Soal tes jarang berubah → cache di edge Vercel 2 menit
-                    // Semua siswa di kelas yang sama terima response yang sama
                     "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300",
                 },
             }
         );
-    } catch (error: any) {
+    } catch (error) {
         console.error("GET /api/tests error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
@@ -86,7 +83,7 @@ export async function POST(request: NextRequest) {
             .delete()
             .eq("test_id", test.id);
 
-        const questionsToInsert = questions.map((q: any, index: number) => ({
+        const questionsToInsert = questions.map((q: { question_text: string; options: string[]; correct_answer: number }, index: number) => ({
             test_id: test.id,
             question_text: q.question_text,
             options: q.options,
@@ -103,8 +100,9 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json({ success: true, test_id: test.id });
-    } catch (error: any) {
-        console.error("POST /api/tests error:", error);
-        return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+    } catch (error) {
+        const err = error as Error;
+        console.error("POST /api/tests error:", err);
+        return NextResponse.json({ error: err.message || "Internal Server Error" }, { status: 500 });
     }
 }

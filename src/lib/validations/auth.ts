@@ -10,5 +10,13 @@ export const siswaLoginSchema = z.object({
     class_id: z.string().uuid("Kelas tidak valid"),
 })
 
+export const guruRegisterSchema = z.object({
+    full_name: z.string().min(3, "Nama lengkap minimal 3 karakter"),
+    username: z.string().min(3, "Username minimal 3 karakter"),
+    password: z.string().min(6, "Password minimal 6 karakter"),
+    class_name: z.string().min(2, "Nama kelas minimal 2 karakter"),
+});
+
 export type GuruLoginInput = z.infer<typeof guruLoginSchema>;
 export type SiswaLoginInput = z.infer<typeof siswaLoginSchema>;
+export type GuruRegisterInput = z.infer<typeof guruRegisterSchema>;

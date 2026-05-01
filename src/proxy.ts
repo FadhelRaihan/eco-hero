@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const SISWA_ROUTES = ["/dashboard", "/misi", "/galeri", "/test"];
 const GURU_ROUTES = ["/guru"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     const siswaToken = request.cookies.get("siswa_token")?.value;

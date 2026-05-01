@@ -20,15 +20,15 @@ export async function POST(request: NextRequest) {
         const { username, password } = parsed.data;
         const supabase = createAdminClient();
 
-        // Cari guru berdasarkan username
-        const { data: guru, error } = await supabase
+        // Cari guru atau admin berdasarkan username
+        const { data: user, error } = await supabase
             .from("users")
-            .select("id, full_name, role, password_hash")
+            .select("id, full_name, username, role, password_hash")
             .eq("username", username)
-            .eq("role", "guru")
+            .in("role", ["guru", "admin"])
             .single();
 
-        if (error || !guru) {
+        if (error || !user) {
             return NextResponse.json(
                 { error: "Username atau password salah" },
                 { status: 401 }
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Verifikasi password
-        const isValid = await bcrypt.compare(password, guru.password_hash!);
+        const isValid = await bcrypt.compare(password, user.password_hash!);
         if (!isValid) {
             return NextResponse.json(
                 { error: "password salah" },
@@ -51,9 +51,9 @@ export async function POST(request: NextRequest) {
         const response = NextResponse.json({
             data: {
                 user: {
-                    id: guru.id,
-                    full_name: guru.full_name,
-                    role: guru.role,
+                    id: user.id,
+                    full_name: user.full_name,
+                    role: user.role,
                 },
             },
             message: "Login berhasil",
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
         // Simpan token & data session di cookie terpisah untuk middleware
         response.cookies.set(
             "guru_session",
-            JSON.stringify({ id: guru.id, full_name: guru.full_name, role: "guru" }),
+            JSON.stringify({ id: user.id, full_name: user.full_name, username: user.username, role: user.role }),
             {
                 httpOnly: false, 
                 secure: process.env.NODE_ENV === "production",

@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
         if (error) throw error;
 
         // Normalisasi count dari array [{count: N}] → N
-        const normalized = (data ?? []).map((kelas: any) => ({
+        const normalized = (data ?? []).map((kelas) => ({
             id: kelas.id,
             name: kelas.name,
             teacher_id: kelas.teacher_id,
@@ -54,6 +54,19 @@ export async function POST(request: NextRequest) {
         }
 
         const supabase = createAdminClient();
+
+        // VALIDASI: Satu Guru Satu Kelas
+        const { data: existingClass } = await supabase
+            .from("classes")
+            .select("id, name")
+            .eq("teacher_id", teacher_id)
+            .single();
+
+        if (existingClass) {
+            return NextResponse.json({ 
+                error: `Guru ini sudah mengampu kelas "${existingClass.name}". Satu guru hanya boleh mengampu satu kelas.` 
+            }, { status: 400 });
+        }
 
         const { data, error } = await supabase
             .from("classes")
