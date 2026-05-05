@@ -3,7 +3,7 @@ import { Search, Cog, Clock, Leaf, Lock, CheckCircle, PlayCircle, ClipboardCheck
 import { cn } from "@/lib/utils";
 
 export type MissionProgress = {
-    id: "pretest" | "misi1" | "misi2" | "misi3" | "misi4" | "posttest";
+    id: string;
     status: "locked" | "in_progress" | "completed";
     progress?: number | null;
     completed_at?: string | null;
