@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
-import { useMission1 } from "@/hooks/useMission1";
+import { useMission1, Step } from "@/hooks/useMission1";
 import Step1Location from "@/components/misi1/Step1Location";
 import Step2Video from "@/components/misi1/Step2Video";
 import Step3Question from "@/components/misi1/Step3Question";
@@ -10,6 +10,7 @@ import BadgeModal from "@/components/misi1/BadgeModal";
 import { Brain, Link as LinkIcon, Search, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 export default function Misi1Page() {
     const router = useRouter();
@@ -55,6 +56,40 @@ export default function Misi1Page() {
 
             {/* Step Content */}
             <div className="flex-1 flex flex-col px-4 md:px-8 lg:px-26 pb-4 min-h-0 overflow-hidden">
+                {/* Step Indicator (Clickable for exploring) */}
+                {!showLoading && user && mission.currentStep > 1 && (
+                    <div className="flex items-center gap-1 mb-4 py-2 overflow-x-auto no-scrollbar shrink-0">
+                        {[1, 2, 3, 4].map((step) => {
+                            const isLocked = step > (mission.currentStep || 1);
+                            const isActive = mission.currentStep === step;
+                            const stepLabels = ["Lokasi", "Materi", "Refleksi", "Forum"];
+
+                            return (
+                                <button
+                                    key={step}
+                                    onClick={() => !isLocked && mission.goToStep(step as Step)}
+                                    disabled={isLocked}
+                                    className={cn(
+                                        "flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all whitespace-nowrap",
+                                        isActive 
+                                            ? "bg-[#1A5C0A] text-white" 
+                                            : isLocked 
+                                                ? "text-gray-300 cursor-not-allowed" 
+                                                : "text-[#1A5C0A] bg-[#B4FF9F]/30 hover:bg-[#B4FF9F]/50"
+                                    )}
+                                >
+                                    <span className={cn(
+                                        "w-4 h-4 rounded-full flex items-center justify-center text-[8px] border",
+                                        isActive ? "border-white/50" : "border-[#1A5C0A]/30"
+                                    )}>
+                                        {step}
+                                    </span>
+                                    {stepLabels[step-1]}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
                 {showLoading ? (
                     <div className="flex-1 flex flex-col items-center justify-center gap-3 py-16">
                         <Loader2 className="animate-spin w-8 h-8 text-[#1A5C0A]" />
@@ -75,19 +110,23 @@ export default function Misi1Page() {
                         )}
                         {(mission.currentStep ?? 1) === 2 && (
                             <Step2Video
-                                caseTopic={mission.selectedLocation!}
+                                caseTopic={mission.activeCase!}
                                 isCompleted={mission.videoWatched}
                                 onComplete={mission.handleVideoComplete}
                                 onLanjut={mission.goToNextStep}
+                                onSwitchCase={mission.switchActiveCase}
+                                selectedLocation={mission.selectedLocation!}
                             />
                         )}
                         {(mission.currentStep ?? 1) === 3 && (
                             <Step3Question
-                                caseTopic={mission.selectedLocation!}
+                                caseTopic={mission.activeCase!}
                                 isCompleted={mission.questionAnswered}
                                 savedAnswer={mission.questionAnswer}
                                 onSubmit={mission.handleQuestionSubmit}
                                 onLanjut={mission.goToNextStep}
+                                onSwitchCase={mission.switchActiveCase}
+                                selectedLocation={mission.selectedLocation!}
                             />
                         )}
                         {(mission.currentStep ?? 1) === 4 && (

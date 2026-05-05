@@ -104,7 +104,7 @@ export const MISSION_1_DATA: Record<CaseTopic, CaseData> = {
                 id: "af-6",
                 type: "text",
                 title: "Kewajiban Bersama",
-                content: "Selain menjaga kondisi lingkungan bumi serta menghemat energi kita sebagai manusia harus menyadari hak warga lain untuk mendapatkan jalanan yang lancar, serta kewajiban warga untuk mendahulukan kepentingan umum seeprti naik kendaraan pribadi dibanding kenyamanan pribadi seperti menggunakan kendaraan pribadi.",
+                content: "Selain menjaga kondisi lingkungan bumi serta menghemat energi kita sebagai manusia harus menyadari hak warga lain untuk mendapatkan jalanan yang lancar, serta kewajiban warga untuk mendahulukan kepentingan umum.",
             },
             {
                 id: "af-7",

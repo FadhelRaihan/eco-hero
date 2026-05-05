@@ -5,7 +5,7 @@ import type { Mission1ForumPost } from "@/types/database";
 import { CaseTopic } from "@/lib/mission-data";
 import { DEMO_MISSION1 } from "@/lib/demo/mockData";
 
-type Step = 1 | 2 | 3 | 4;
+export type Step = 1 | 2 | 3 | 4;
 
 interface PostWithMeta extends Mission1ForumPost {
     users: { id: string; full_name: string };
@@ -25,6 +25,7 @@ export function useMission1(studentId: string, classId: string) {
     const [hasPosted, setHasPosted] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [initialized, setInitialized] = useState(false);
+    const [activeCase, setActiveCase] = useState<CaseTopic | null>(null);
 
     const isDemoMode = typeof window !== "undefined"
         ? localStorage.getItem("eco_demo_mode") === "true"
@@ -41,8 +42,9 @@ export function useMission1(studentId: string, classId: string) {
             setVideoWatched(DEMO_MISSION1.videoWatched);
             setQuestionAnswered(DEMO_MISSION1.questionAnswered);
             setQuestionAnswer(DEMO_MISSION1.questionAnswer);
-            setPosts(DEMO_MISSION1.posts as any);
+            setPosts(DEMO_MISSION1.posts as PostWithMeta[]);
             setHasPosted(DEMO_MISSION1.hasPosted);
+            setActiveCase(DEMO_MISSION1.selectedLocation);
             setInitialized(true);
             return;
         }
@@ -65,6 +67,7 @@ export function useMission1(studentId: string, classId: string) {
                         };
                         const normalizedCase = legacyMap[data.mission1_case] || (data.mission1_case as CaseTopic);
                         setSelectedLocation(normalizedCase);
+                        setActiveCase(normalizedCase);
                     }
 
                     if (step >= 2) setVideoWatched(data.mission1_video_watched ?? false);
@@ -95,7 +98,7 @@ export function useMission1(studentId: string, classId: string) {
         }
 
         syncStep();
-    }, [studentId, classId]);
+    }, [studentId, classId, isDemoMode]);
 
     const fetchPosts = useCallback(async () => {
         if (!classId || isDemoMode) return;
@@ -111,7 +114,11 @@ export function useMission1(studentId: string, classId: string) {
         } finally {
             setLoadingPosts(false);
         }
-    }, [classId, studentId]);
+    }, [classId, studentId, isDemoMode]);
+
+    function goToStep(step: Step) {
+        setCurrentStep(step);
+    }
 
     async function advanceStep(nextStep: Step) {
         setCurrentStep(nextStep);
@@ -125,12 +132,17 @@ export function useMission1(studentId: string, classId: string) {
 
     async function handleLocationSelect(location: CaseTopic) {
         setSelectedLocation(location);
+        setActiveCase(location);
         if (isDemoMode) return;
         await fetch(`/api/progress/${studentId}/mission/1`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ mission1_case: location }),
         });
+    }
+
+    function switchActiveCase(location: CaseTopic) {
+        setActiveCase(location);
     }
 
     async function goToNextStep() {
@@ -184,7 +196,7 @@ export function useMission1(studentId: string, classId: string) {
                     created_at: new Date().toISOString(),
                     users: { id: studentId, full_name: "Andi Pratama (Demo)" },
                     mission1_forum_comments: [{ count: 0 }],
-                } as any;
+                } as PostWithMeta;
                 setPosts((prev) => [demoPost, ...prev]);
                 setHasPosted(true);
                 return { success: true };
@@ -200,8 +212,8 @@ export function useMission1(studentId: string, classId: string) {
             setHasPosted(true);
             setPosts((prev) => [result.data, ...prev]);
             return { success: true };
-        } catch (err: any) {
-            return { success: false, error: err.message };
+        } catch (err) {
+            return { success: false, error: (err as Error).message };
         } finally {
             setSubmitting(false);
         }
@@ -251,5 +263,8 @@ export function useMission1(studentId: string, classId: string) {
         submitPost,
         completeMission,
         fetchPosts,
+        activeCase,
+        switchActiveCase,
+        goToStep
     };
 }

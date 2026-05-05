@@ -42,6 +42,7 @@ export default function LoginSiswaPage() {
     const [serverError, setServerError] = useState("");
     const [loading, setLoading] = useState(false);
     const [demoLoading, setDemoLoading] = useState(false);
+    const [showSuggestions, setShowSuggestions] = useState(false);
 
     const handleStartDemo = () => {
         setDemoLoading(true);
@@ -194,47 +195,74 @@ export default function LoginSiswaPage() {
                         )}
                     </div>
 
-                    {/* Pilih Nama Lengkap */}
-                    <div>
+                    {/* Cari Nama Lengkap */}
+                    <div className="relative">
                         <Label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                            Langkah 2: Pilih Namamu
+                            Langkah 2: Cari Namamu
                         </Label>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    disabled={!selectedClassId || loadingStudents}
-                                    className="h-12 w-full p-4 justify-between border-2 border-gray-100 rounded-xl font-bold text-gray-600 hover:text-[#1A5C0A] hover:border-[#1A5C0A] transition-all bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {loadingStudents ? "Memuat..." : watch("full_name") || "Pilih Namamu"}
-                                    <IconChevronDown className="w-3 h-3 ml-2" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-64 overflow-y-auto rounded-2xl border-none shadow-2xl p-2">
-                                <p className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400">Siswa di Kelas Ini</p>
-                                {studentList.length > 0 ? (
-                                    studentList.map((student) => {
-                                        const name = student.users?.full_name;
-                                        if (!name) return null;
-                                        return (
-                                            <DropdownMenuCheckboxItem 
-                                                key={student.student_id} 
-                                                checked={watch("full_name") === name} 
-                                                onCheckedChange={(value) => {
-                                                    if (value) setValue("full_name", name);
-                                                }}
-                                            >
-                                                {name}
-                                            </DropdownMenuCheckboxItem>
-                                        );
-                                    })
+                        <div className="relative group">
+                            <input
+                                type="text"
+                                placeholder={loadingStudents ? "Memuat siswa..." : "Ketik namamu..."}
+                                disabled={!selectedClassId || loadingStudents}
+                                value={watch("full_name") || ""}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setValue("full_name", val);
+                                }}
+                                onFocus={() => selectedClassId && !loadingStudents && setShowSuggestions(true)}
+                                // Gunakan setTimeout agar klik pada list sempat terproses sebelum list hilang
+                                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                                className={cn(
+                                    "h-12 w-full p-4 border-2 border-gray-100 rounded-xl font-bold text-gray-600 focus:outline-none focus:border-[#1A5C0A] transition-all bg-white placeholder:text-gray-300",
+                                    !selectedClassId && "opacity-50 cursor-not-allowed bg-gray-50"
+                                )}
+                            />
+                            {loadingStudents && (
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                    <Loader2 className="animate-spin w-4 h-4 text-gray-400" />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Suggestion List */}
+                        {showSuggestions && selectedClassId && !loadingStudents && (watch("full_name") || "").length > 0 && (
+                            <div className="absolute z-50 mt-2 w-full bg-white rounded-2xl shadow-2xl border border-gray-100 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                                <p className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-50 bg-gray-50/30">
+                                    Hasil Pencarian
+                                </p>
+                                {studentList.filter(s => 
+                                    s.users?.full_name.toLowerCase().includes((watch("full_name") || "").toLowerCase())
+                                ).length > 0 ? (
+                                    studentList
+                                        .filter(s => s.users?.full_name.toLowerCase().includes((watch("full_name") || "").toLowerCase()))
+                                        .map((student) => {
+                                            const name = student.users?.full_name || "";
+                                            return (
+                                                <button
+                                                    key={student.student_id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setValue("full_name", name);
+                                                        setShowSuggestions(false);
+                                                    }}
+                                                    className="w-full text-left px-4 py-3 text-sm font-bold text-gray-600 hover:bg-[#B4FF9F]/20 hover:text-[#1A5C0A] transition-colors border-b border-gray-50 last:border-none flex items-center justify-between group"
+                                                >
+                                                    {name}
+                                                    {watch("full_name") === name && (
+                                                        <Play className="w-3 h-3 fill-current text-[#1A5C0A]" />
+                                                    )}
+                                                </button>
+                                            );
+                                        })
                                 ) : (
-                                    <div className="px-2 py-3 text-sm text-center text-gray-500 font-medium">
-                                        Belum ada data siswa
+                                    <div className="px-4 py-6 text-sm text-center text-gray-400 font-medium">
+                                        Nama tidak ditemukan di kelas ini
                                     </div>
                                 )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                            </div>
+                        )}
+
                         {errors.full_name && (
                             <p className="text-xs text-red-500 mt-1">
                                 {errors.full_name.message}

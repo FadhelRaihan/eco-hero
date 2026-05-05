@@ -116,7 +116,7 @@ const MISSION_CONFIG = [
 ];
 
 export interface MissionCardProps {
-    progress?: any;
+    progress?: Partial<MissionProgress>;
     missionNumber: number | string;
     variant?: "compact" | "full";
 }
@@ -135,9 +135,10 @@ export default function MissionCard({
     const Icon = config.icon;
     const status = progress?.status || (typeof missionNumber === 'string' ? (progress?.status || 'locked') : 'locked');
     
-    // Khusus untuk pretest/posttest jika status belum ada di DB
+    const isTest = config.id === "pretest" || config.id === "posttest";
     const isLocked = status === "locked";
     const isDone = status === "completed";
+    const isCompletedTest = isTest && isDone;
 
     const card = (
         <div
@@ -145,8 +146,8 @@ export default function MissionCard({
                 "rounded-2xl border-2 p-3 sm:p-4 transition-all w-full flex flex-col justify-between min-h-[80px]",
                 config.color.bg,
                 config.color.border,
-                isLocked && config.color.locked,
-                !isLocked && "hover:scale-[1.02] cursor-pointer"
+                (isLocked || isCompletedTest) && config.color.locked,
+                (!isLocked && !isCompletedTest) && "hover:scale-[1.02] cursor-pointer"
             )}
         >
             <div className="flex items-start gap-2 sm:gap-3">
@@ -167,7 +168,7 @@ export default function MissionCard({
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                     <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide opacity-60">
-                        {config.number === 0 || config.number === 5 ? `Tahap ${config.subtitle}` : `Misi ${config.number}`}
+                        {config.id === "pretest" || config.id === "posttest" ? `Tahap ${config.title}` : `Misi ${config.number}`}
                     </p>
                     <p className={cn(
                         "font-bold truncate",
@@ -194,11 +195,11 @@ export default function MissionCard({
                     "rounded-full px-1.5 sm:px-2.5 py-1 flex items-center gap-1 flex-shrink-0",
                     config.color.badge
                 )}>
-                    {isLocked && <Lock size={10} />}
-                    {isDone && <CheckCircle size={10} />}
+                    {(isLocked || isCompletedTest) && <Lock size={10} />}
+                    {isDone && !isCompletedTest && <CheckCircle size={10} />}
                     {status === "in_progress" && <PlayCircle size={10} />}
                     <span className="text-[9px] font-bold hidden xs:inline">
-                        {isLocked ? "Terkunci" : isDone ? "Selesai" : "Aktif"}
+                        {isLocked ? "Terkunci" : isCompletedTest ? "Selesai & Terkunci" : isDone ? "Selesai" : "Aktif"}
                     </span>
                 </div>
             </div>
@@ -210,16 +211,16 @@ export default function MissionCard({
                     config.color.title
                 )}>
                     <span className="text-[9px] sm:text-[10px] font-medium opacity-70">
-                        {isDone ? "✓ Lencana diraih" : "Ketuk untuk melanjutkan"}
+                        {isCompletedTest ? "Sudah dikerjakan" : isDone ? "✓ Lencana diraih" : "Ketuk untuk memulai"}
                     </span>
                     <span className="text-[9px] sm:text-[10px] font-bold opacity-90">
-                        {isDone ? "Lihat ulang →" : "Lanjutkan →"}
+                        {isCompletedTest ? "Terkunci" : isDone ? "Lihat ulang →" : "Mulai →"}
                     </span>
                 </div>
             )}
         </div>
     );
 
-    if (isLocked) return card;
+    if (isLocked || isCompletedTest) return card;
     return <Link href={config.href} className="block w-full h-full">{card}</Link>;
 }

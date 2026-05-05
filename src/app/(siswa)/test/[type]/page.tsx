@@ -29,6 +29,16 @@ export default function TestPage() {
     const [done, setDone] = useState(false);
     const [score, setScore] = useState<number | null>(null);
 
+    // Helper to shuffle questions
+    function shuffleArray<T>(array: T[]): T[] {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
+    }
+
     useEffect(() => {
         if (!user) return;
 
@@ -36,21 +46,37 @@ export default function TestPage() {
             ? localStorage.getItem("eco_demo_mode") === "true"
             : false;
 
-        // ── DEMO MODE ──────────────────────────────────────────
-        if (isDemoMode) {
-            setQuestions(DEMO_TEST_QUESTIONS as unknown as Question[]);
-            setLoading(false);
-            return;
-        }
-        // ── END DEMO ───────────────────────────────────────────
-
-        async function fetchTest() {
+        async function checkAndFetch() {
             try {
+                // 1. Cek progres dulu untuk memastikan belum dikerjakan
+                const progressRes = await fetch(`/api/progress/${user?.id}`);
+                const progressData = await progressRes.json();
+                
+                if (progressRes.ok && progressData.data) {
+                    const status = type === "pretest" ? progressData.data.pretest_status : progressData.data.posttest_status;
+                    if (status === "completed" && !isDemoMode) {
+                        router.replace("/dashboard");
+                        return;
+                    }
+                }
+
+                // 2. Jika demo mode, langsung load mock data yang diacak
+                if (isDemoMode) {
+                    setQuestions(shuffleArray(DEMO_TEST_QUESTIONS as unknown as Question[]));
+                    setLoading(false);
+                    return;
+                }
+
+                // 3. Load soal dari server
                 const res = await fetch(`/api/tests?classId=${user?.class_id}&type=${type}`);
                 const result = await res.json();
                 
                 if (res.ok && result.data?.questions) {
-                    setQuestions(result.data.questions);
+                    // Acak urutan soal sebelum di-set ke state
+                    setQuestions(shuffleArray(result.data.questions));
+                } else if (res.status === 403) {
+                    router.replace("/dashboard");
+                    return;
                 }
             } catch (err) {
                 console.error("Fetch test error:", err);
@@ -60,8 +86,8 @@ export default function TestPage() {
             }
         }
 
-        fetchTest();
-    }, [user, type]);
+        checkAndFetch();
+    }, [user, type, router]);
 
     const handleSelect = (optionIndex: number) => {
         const questionId = questions[currentQuestionIndex].id;

@@ -11,6 +11,8 @@ interface Step3QuestionProps {
     savedAnswer?: string;
     onSubmit: (answer: string) => void;
     onLanjut: () => void;
+    onSwitchCase: (topic: CaseTopic) => void;
+    selectedLocation: CaseTopic;
 }
 
 export default function Step3Question({
@@ -19,11 +21,18 @@ export default function Step3Question({
     savedAnswer,
     onSubmit,
     onLanjut,
+    onSwitchCase,
+    selectedLocation
 }: Step3QuestionProps) {
     const data = MISSION_1_DATA[caseTopic];
     const [selectedOption, setSelectedOption] = useState<string>(savedAnswer || "");
 
     function handleLanjut() {
+        if (caseTopic !== selectedLocation) {
+            onSwitchCase(selectedLocation);
+            return;
+        }
+
         if (isCompleted) {
             onLanjut();
             return;
@@ -37,23 +46,41 @@ export default function Step3Question({
     return (
         <div className="flex flex-col">
             <div className="py-4">
-                {/* Header Tahap */}
-                <div className="flex items-center gap-3 mb-5 shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-[#B4FF9F] flex items-center justify-center">
-                        <span className="text-[#1A5C0A] font-extrabold text-lg">3</span>
-                    </div>
-                    <div>
-                        <h2 className="text-sm font-black text-[#1A5C0A] uppercase tracking-wider leading-none mb-1">
-                            Refleksi Kritis
-                        </h2>
-                        <p className="text-[10px] font-bold text-[#333333]/40 uppercase tracking-widest">
-                            Tentukan Sikapmu
-                        </p>
-                    </div>
+                {/* Case Switcher */}
+                <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200 mb-6 w-full sm:w-fit">
+                    {(Object.keys(MISSION_1_DATA) as CaseTopic[]).map((topic) => (
+                        <button
+                            key={topic}
+                            onClick={() => onSwitchCase(topic)}
+                            className={cn(
+                                "flex-1 sm:flex-none px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2",
+                                caseTopic === topic
+                                    ? "bg-white text-[#1A5C0A] shadow-sm ring-1 ring-black/5"
+                                    : "text-gray-400 hover:text-gray-600"
+                            )}
+                        >
+                            {topic === "sampah" ? "Sampah" : "Kendaraan"}
+                            {selectedLocation === topic && (
+                                <div className="w-2 h-2 rounded-full bg-[#1A5C0A]" title="Kasus Pilihanmu" />
+                            )}
+                        </button>
+                    ))}
                 </div>
 
+                {caseTopic !== selectedLocation && (
+                    <div className="bg-amber-50 border-2 border-amber-200 text-amber-700 px-4 py-3 rounded-2xl text-xs font-bold mb-6 animate-in fade-in slide-in-from-top-1 flex items-center gap-3">
+                        <HelpCircle size={18} className="shrink-0" />
+                        <p>
+                            Kamu sedang melihat pertanyaan kasus lain. Untuk melanjutkan misi, silakan kembali ke kasus: <span className="underline uppercase">{selectedLocation === "sampah" ? "Sampah" : "Kendaraan"}</span>
+                        </p>
+                    </div>
+                )}
+
                 {/* Kartu Pertanyaan */}
-                <div className="rounded-3xl p-6 sm:p-10 bg-white border-2 border-[#1A5C0A]/10 shadow-xl relative overflow-hidden">
+                <div className={cn(
+                    "rounded-3xl p-6 sm:p-10 bg-white border-2 border-[#1A5C0A]/10 shadow-xl relative overflow-hidden transition-opacity duration-300",
+                    caseTopic !== selectedLocation && "opacity-60 grayscale-[0.5]"
+                )}>
                     {/* Dekorasi Ikon */}
                     <HelpCircle className="absolute -top-6 -right-6 w-32 h-32 text-[#B4FF9F]/20 -rotate-12" />
 
@@ -68,14 +95,14 @@ export default function Step3Question({
                                 return (
                                     <button
                                         key={option.value}
-                                        onClick={() => !isCompleted && setSelectedOption(option.value)}
-                                        disabled={isCompleted}
+                                        onClick={() => !isCompleted && caseTopic === selectedLocation && setSelectedOption(option.value)}
+                                        disabled={isCompleted || caseTopic !== selectedLocation}
                                         className={cn(
                                             "group p-6 rounded-2xl border-2 transition-all duration-300 text-left relative overflow-hidden",
                                             isSelected
                                                 ? "border-[#1A5C0A] bg-[#B4FF9F]/10 shadow-[0_0_20px_rgba(180,255,159,0.3)]"
                                                 : "border-gray-100 bg-gray-50 hover:border-[#1A5C0A]/30 hover:bg-white",
-                                            isCompleted && !isSelected && "opacity-40 grayscale-[0.5]"
+                                            (isCompleted || caseTopic !== selectedLocation) && !isSelected && "opacity-40 grayscale-[0.5]"
                                         )}
                                     >
                                         <div className="flex items-center justify-between relative z-10">
@@ -97,7 +124,7 @@ export default function Step3Question({
                                         </div>
 
                                         {/* Efek Hover Background */}
-                                        {!isCompleted && !isSelected && (
+                                        {!isCompleted && !isSelected && caseTopic === selectedLocation && (
                                             <div className="absolute inset-0 bg-gradient-to-r from-[#B4FF9F]/0 to-[#B4FF9F]/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                                         )}
                                     </button>
@@ -105,7 +132,7 @@ export default function Step3Question({
                             })}
                         </div>
 
-                        {isCompleted && (
+                        {isCompleted && caseTopic === selectedLocation && (
                             <div className="mt-10 flex items-center justify-center gap-2 py-3 px-6 bg-[#B4FF9F]/20 rounded-2xl border border-[#1A5C0A]/10 animate-in fade-in zoom-in duration-500">
                                 <div className="w-5 h-5 rounded-full bg-[#1A5C0A] flex items-center justify-center">
                                     <Check size={12} className="text-white" strokeWidth={4} />
@@ -123,16 +150,18 @@ export default function Step3Question({
             <div className="flex justify-center sm:justify-end">
                 <button
                     onClick={handleLanjut}
-                    disabled={!selectedOption}
+                    disabled={caseTopic === selectedLocation && !selectedOption}
                     className={cn(
                         "group flex items-center justify-center gap-3 w-full sm:w-auto px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all duration-300",
-                        selectedOption
+                        (selectedOption || caseTopic !== selectedLocation)
                             ? "bg-[#1A5C0A] text-[#B4FF9F] hover:bg-[#134407] cursor-pointer"
                             : "bg-gray-100 text-gray-300 cursor-not-allowed"
                     )}
                 >
-                    {isCompleted ? "Lanjut Ke Forum" : "Simpan & Lanjut"}
-                    <ArrowRight size={20} className={cn("transition-transform group-hover:translate-x-1", !selectedOption && "opacity-0")} strokeWidth={3} />
+                    {caseTopic !== selectedLocation 
+                        ? "Kembali ke Kasus Utama" 
+                        : isCompleted ? "Lanjut Ke Forum" : "Simpan & Lanjut"}
+                    <ArrowRight size={20} className={cn("transition-transform group-hover:translate-x-1", (!selectedOption && caseTopic === selectedLocation) && "opacity-0")} strokeWidth={3} />
                 </button>
             </div>
         </div>

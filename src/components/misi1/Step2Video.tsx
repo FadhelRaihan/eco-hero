@@ -11,25 +11,44 @@ interface Step2VideoProps {
     isCompleted: boolean;
     onComplete: () => void;
     onLanjut: () => void;
+    onSwitchCase: (topic: CaseTopic) => void;
+    selectedLocation: CaseTopic;
 }
 
 export default function Step2Video({
     caseTopic,
     onComplete,
     onLanjut,
+    onSwitchCase,
+    selectedLocation
 }: Step2VideoProps) {
     const data = MISSION_1_DATA[caseTopic];
     const [currentBlockIndex, setCurrentBlockIndex] = useState(0);
     const [currentComicPage, setCurrentComicPage] = useState(0);
     const [videoPlaying, setVideoPlaying] = useState(false);
 
+    // Reset index saat pindah kasus
+    const handleSwitch = (topic: CaseTopic) => {
+        if (topic === caseTopic) return;
+        setCurrentBlockIndex(0);
+        setCurrentComicPage(0);
+        setVideoPlaying(false);
+        onSwitchCase(topic);
+    };
+
     const currentBlock = data.materials[currentBlockIndex];
     const isLastBlock = currentBlockIndex === data.materials.length - 1;
 
     const handleNext = () => {
         if (isLastBlock) {
-            onComplete();
-            onLanjut();
+            // Hanya trigger complete jika sedang di kasus yang dipilih resmi
+            if (caseTopic === selectedLocation) {
+                onComplete();
+                onLanjut();
+            } else {
+                // Jika sedang menjelajah, tawari untuk kembali ke kasus asli atau lanjut
+                handleSwitch(selectedLocation);
+            }
         } else {
             setCurrentBlockIndex((prev) => prev + 1);
             setCurrentComicPage(0);
@@ -79,15 +98,43 @@ export default function Step2Video({
                             Pahami Materi
                         </h2>
                     </div>
-                    <div className="text-[10px] font-bold text-[#333333]/40 bg-gray-100 px-3 py-1 rounded-full uppercase tracking-widest">
-                        Bagian {currentBlockIndex + 1} dari {data.materials.length}
+                    {/* Case Switcher */}
+                    <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200">
+                        {(Object.keys(MISSION_1_DATA) as CaseTopic[]).map((topic) => (
+                            <button
+                                key={topic}
+                                onClick={() => handleSwitch(topic)}
+                                className={cn(
+                                    "px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1.5",
+                                    caseTopic === topic
+                                        ? "bg-white text-[#1A5C0A] shadow-sm ring-1 ring-black/5"
+                                        : "text-gray-400 hover:text-gray-600"
+                                )}
+                            >
+                                {topic === "sampah" ? "Sampah" : "Kendaraan"}
+                                {selectedLocation === topic && (
+                                    <div className="w-1.5 h-1.5 rounded-full bg-[#1A5C0A]" title="Kasus Pilihanmu" />
+                                )}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
+                {caseTopic !== selectedLocation && (
+                    <div className="bg-amber-50 border border-amber-200 text-amber-700 px-3 py-1.5 rounded-lg text-[10px] font-bold mb-3 animate-in fade-in slide-in-from-top-1">
+                        ✨ Kamu sedang menjelajahi kasus lain. Kasus pilihanmu adalah: <span className="underline uppercase">{selectedLocation === "sampah" ? "Sampah" : "Kendaraan"}</span>
+                    </div>
+                )}
+
                 <div className="flex-1 flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden min-h-0">
-                    <h3 className="text-base font-extrabold text-[#1A5C0A] mb-2 leading-tight shrink-0">
-                        {currentBlock.title}
-                    </h3>
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-base font-extrabold text-[#1A5C0A] leading-tight shrink-0">
+                            {currentBlock.title}
+                        </h3>
+                        <div className="text-[10px] font-bold text-[#333333]/40 bg-gray-50 px-2 py-0.5 rounded-md uppercase tracking-widest">
+                            {currentBlockIndex + 1} / {data.materials.length}
+                        </div>
+                    </div>
 
                     {/* Rendering berdasarkan tipe materi */}
                     {currentBlock.type === "text" && (
