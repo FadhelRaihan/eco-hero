@@ -8,7 +8,7 @@ import { CaseTopic, MISSION_1_DATA } from "@/lib/mission-data";
 interface Step3QuestionProps {
     caseTopic: CaseTopic;
     isCompleted: boolean;
-    savedAnswer?: string;
+    savedAnswers?: Record<string, string>; // Ubah ke plural
     onSubmit: (answer: string) => void;
     onLanjut: () => void;
     onSwitchCase: (topic: CaseTopic) => void;
@@ -18,29 +18,29 @@ interface Step3QuestionProps {
 export default function Step3Question({
     caseTopic,
     isCompleted,
-    savedAnswer,
+    savedAnswers,
     onSubmit,
     onLanjut,
     onSwitchCase,
     selectedLocation
 }: Step3QuestionProps) {
     const data = MISSION_1_DATA[caseTopic];
-    const [selectedOption, setSelectedOption] = useState<string>(savedAnswer || "");
+    // Ambil jawaban dari state plural berdasarkan kasus saat ini
+    const [selectedOption, setSelectedOption] = useState<string>(savedAnswers?.[caseTopic] || "");
+
 
     function handleLanjut() {
+        if (!selectedOption) return;
+
+        onSubmit(selectedOption);
+
         if (caseTopic !== selectedLocation) {
-            onSwitchCase(selectedLocation);
+            // Jika ini kasus eksplorasi, biarkan siswa tetap di sini atau lanjut eksplorasi lain
+            // Untuk flow yang mulus, kita biarkan mereka tetap di sini
             return;
         }
 
-        if (isCompleted) {
-            onLanjut();
-            return;
-        }
-        if (selectedOption) {
-            onSubmit(selectedOption);
-            onLanjut();
-        }
+        onLanjut();
     }
 
     return (
@@ -68,18 +68,17 @@ export default function Step3Question({
                 </div>
 
                 {caseTopic !== selectedLocation && (
-                    <div className="bg-amber-50 border-2 border-amber-200 text-amber-700 px-4 py-3 rounded-2xl text-xs font-bold mb-6 animate-in fade-in slide-in-from-top-1 flex items-center gap-3">
+                    <div className="bg-[#B4FF9F]/10 border-2 border-[#1A5C0A]/20 text-[#1A5C0A] px-4 py-3 rounded-2xl text-xs font-bold mb-6 animate-in fade-in slide-in-from-top-1 flex items-center gap-3">
                         <HelpCircle size={18} className="shrink-0" />
                         <p>
-                            Kamu sedang melihat pertanyaan kasus lain. Untuk melanjutkan misi, silakan kembali ke kasus: <span className="underline uppercase">{selectedLocation === "sampah" ? "Sampah" : "Kendaraan"}</span>
+                            Kamu sedang mengeksplorasi kasus tambahan. Berikan opinimu di sini sebelum kembali ke kasus utama: <span className="underline uppercase">{selectedLocation === "sampah" ? "Sampah" : "Kendaraan"}</span>
                         </p>
                     </div>
                 )}
 
                 {/* Kartu Pertanyaan */}
                 <div className={cn(
-                    "rounded-3xl p-6 sm:p-10 bg-white border-2 border-[#1A5C0A]/10 shadow-xl relative overflow-hidden transition-opacity duration-300",
-                    caseTopic !== selectedLocation && "opacity-60 grayscale-[0.5]"
+                    "rounded-3xl p-6 sm:p-10 bg-white border-2 border-[#1A5C0A]/10 shadow-xl relative overflow-hidden transition-all duration-300",
                 )}>
                     {/* Dekorasi Ikon */}
                     <HelpCircle className="absolute -top-6 -right-6 w-32 h-32 text-[#B4FF9F]/20 -rotate-12" />
@@ -92,17 +91,16 @@ export default function Step3Question({
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {data.question.options.map((option) => {
                                 const isSelected = selectedOption === option.value;
+                                
                                 return (
                                     <button
                                         key={option.value}
-                                        onClick={() => !isCompleted && caseTopic === selectedLocation && setSelectedOption(option.value)}
-                                        disabled={isCompleted || caseTopic !== selectedLocation}
+                                        onClick={() => setSelectedOption(option.value)}
                                         className={cn(
                                             "group p-6 rounded-2xl border-2 transition-all duration-300 text-left relative overflow-hidden",
                                             isSelected
                                                 ? "border-[#1A5C0A] bg-[#B4FF9F]/10 shadow-[0_0_20px_rgba(180,255,159,0.3)]"
                                                 : "border-gray-100 bg-gray-50 hover:border-[#1A5C0A]/30 hover:bg-white",
-                                            (isCompleted || caseTopic !== selectedLocation) && !isSelected && "opacity-40 grayscale-[0.5]"
                                         )}
                                     >
                                         <div className="flex items-center justify-between relative z-10">
@@ -124,7 +122,7 @@ export default function Step3Question({
                                         </div>
 
                                         {/* Efek Hover Background */}
-                                        {!isCompleted && !isSelected && caseTopic === selectedLocation && (
+                                        {!isSelected && (
                                             <div className="absolute inset-0 bg-gradient-to-r from-[#B4FF9F]/0 to-[#B4FF9F]/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                                         )}
                                     </button>
@@ -138,7 +136,7 @@ export default function Step3Question({
                                     <Check size={12} className="text-white" strokeWidth={4} />
                                 </div>
                                 <span className="text-xs font-black text-[#1A5C0A] uppercase tracking-widest">
-                                    Pilihanmu telah tersimpan
+                                    Pilihan utamamu telah tersimpan
                                 </span>
                             </div>
                         )}
@@ -147,21 +145,30 @@ export default function Step3Question({
             </div>
 
             {/* Tombol Aksi */}
-            <div className="flex justify-center sm:justify-end">
+            <div className="flex flex-col sm:flex-row justify-center sm:justify-end gap-3">
+                {caseTopic !== selectedLocation && (
+                    <button
+                        onClick={() => onSwitchCase(selectedLocation)}
+                        className="flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest bg-gray-100 text-gray-500 hover:bg-gray-200 transition-all"
+                    >
+                        Kembali ke Kasus Utama
+                    </button>
+                )}
+                
                 <button
                     onClick={handleLanjut}
-                    disabled={caseTopic === selectedLocation && !selectedOption}
+                    disabled={!selectedOption}
                     className={cn(
                         "group flex items-center justify-center gap-3 w-full sm:w-auto px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all duration-300",
-                        (selectedOption || caseTopic !== selectedLocation)
+                        selectedOption
                             ? "bg-[#1A5C0A] text-[#B4FF9F] hover:bg-[#134407] cursor-pointer"
                             : "bg-gray-100 text-gray-300 cursor-not-allowed"
                     )}
                 >
                     {caseTopic !== selectedLocation 
-                        ? "Kembali ke Kasus Utama" 
+                        ? "Simpan Opini Eksplorasi" 
                         : isCompleted ? "Lanjut Ke Forum" : "Simpan & Lanjut"}
-                    <ArrowRight size={20} className={cn("transition-transform group-hover:translate-x-1", (!selectedOption && caseTopic === selectedLocation) && "opacity-0")} strokeWidth={3} />
+                    <ArrowRight size={20} className={cn("transition-transform group-hover:translate-x-1", !selectedOption && "opacity-0")} strokeWidth={3} />
                 </button>
             </div>
         </div>

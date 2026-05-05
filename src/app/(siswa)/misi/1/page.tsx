@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { useMission1, Step } from "@/hooks/useMission1";
+import { CaseTopic } from "@/lib/mission-data";
 import Step1Location from "@/components/misi1/Step1Location";
 import Step2Video from "@/components/misi1/Step2Video";
 import Step3Question from "@/components/misi1/Step3Question";
@@ -120,13 +121,14 @@ export default function Misi1Page() {
                         )}
                         {(mission.currentStep ?? 1) === 3 && (
                             <Step3Question
-                                caseTopic={mission.activeCase!}
-                                isCompleted={mission.questionAnswered}
-                                savedAnswer={mission.questionAnswer}
+                                key={mission.activeCase || "sampah"}
+                                caseTopic={mission.activeCase || "sampah"}
+                                isCompleted={!!mission.selectedLocation}
+                                savedAnswers={mission.questionAnswers}
                                 onSubmit={mission.handleQuestionSubmit}
                                 onLanjut={mission.goToNextStep}
                                 onSwitchCase={mission.switchActiveCase}
-                                selectedLocation={mission.selectedLocation!}
+                                selectedLocation={mission.selectedLocation as CaseTopic}
                             />
                         )}
                         {(mission.currentStep ?? 1) === 4 && (

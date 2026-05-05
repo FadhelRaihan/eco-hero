@@ -138,7 +138,12 @@ export default function MissionCard({
     const isTest = config.id === "pretest" || config.id === "posttest";
     const isLocked = status === "locked";
     const isDone = status === "completed";
-    const isCompletedTest = isTest && isDone;
+    
+    // Pengecekan Demo Mode
+    const isDemoMode = typeof window !== "undefined" && localStorage.getItem("eco_demo_mode") === "true";
+    
+    // Test hanya dianggap "selesai & terkunci" jika bukan di mode demo
+    const isCompletedTest = !isDemoMode && isTest && isDone;
 
     const card = (
         <div
@@ -199,7 +204,7 @@ export default function MissionCard({
                     {isDone && !isCompletedTest && <CheckCircle size={10} />}
                     {status === "in_progress" && <PlayCircle size={10} />}
                     <span className="text-[9px] font-bold hidden xs:inline">
-                        {isLocked ? "Terkunci" : isCompletedTest ? "Selesai & Terkunci" : isDone ? "Selesai" : "Aktif"}
+                        {isLocked ? "Terkunci" : isCompletedTest ? "Selesai & Terkunci" : isDone ? (isDemoMode ? "Selesai (Demo)" : "Selesai") : "Aktif"}
                     </span>
                 </div>
             </div>
@@ -211,10 +216,10 @@ export default function MissionCard({
                     config.color.title
                 )}>
                     <span className="text-[9px] sm:text-[10px] font-medium opacity-70">
-                        {isCompletedTest ? "Sudah dikerjakan" : isDone ? "✓ Lencana diraih" : "Ketuk untuk memulai"}
+                        {isCompletedTest ? "Sudah dikerjakan" : isDone ? (isDemoMode ? "Bisa diulang (Demo)" : "✓ Lencana diraih") : "Ketuk untuk memulai"}
                     </span>
                     <span className="text-[9px] sm:text-[10px] font-bold opacity-90">
-                        {isCompletedTest ? "Terkunci" : isDone ? "Lihat ulang →" : "Mulai →"}
+                        {isCompletedTest ? "Terkunci" : isDone ? (isDemoMode ? "Coba Lagi →" : "Lihat ulang →") : "Mulai →"}
                     </span>
                 </div>
             )}

@@ -35,10 +35,10 @@ export async function GET(
         if (error) throw error;
 
         return NextResponse.json({ data });
-    } catch (error: any) {
+    } catch (error) {
         console.error("GET /api/mission1/posts error:", error);
         return NextResponse.json(
-            { error: error.message || "Gagal mengambil data forum" },
+            { error: (error as Error).message || "Gagal mengambil data forum" },
             { status: 500 }
         );
     }
@@ -62,20 +62,6 @@ export async function POST(
 
         const supabase = createAdminClient();
 
-        // Cek apakah siswa sudah pernah posting di kelas ini
-        const { data: existing } = await supabase
-            .from("mission1_forum_posts")
-            .select("id")
-            .eq("class_id", classId)
-            .eq("student_id", body.student_id)
-            .single();
-
-        if (existing) {
-            return NextResponse.json(
-                { error: "Kamu sudah membuat post sebelumnya" },
-                { status: 409 }
-            );
-        }
 
         const { data, error } = await supabase
             .from("mission1_forum_posts")
@@ -98,10 +84,10 @@ export async function POST(
         if (error) throw error;
 
         return NextResponse.json({ data }, { status: 201 });
-    } catch (error: any) {
+    } catch (error) {
         console.error("POST /api/mission1/posts error:", error);
         return NextResponse.json(
-            { error: error.message || "Gagal membuat post" },
+            { error: (error as Error).message || "Gagal membuat post" },
             { status: 500 }
         );
     }

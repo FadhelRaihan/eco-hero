@@ -19,7 +19,7 @@ export function useMission1(studentId: string, classId: string) {
     const [selectedLocation, setSelectedLocation] = useState<CaseTopic | null>(null);
     const [videoWatched, setVideoWatched] = useState(false);
     const [questionAnswered, setQuestionAnswered] = useState(false);
-    const [questionAnswer, setQuestionAnswer] = useState("");
+    const [questionAnswers, setQuestionAnswers] = useState<Record<string, string>>({}); // Ubah ke plural/objek
     const [posts, setPosts] = useState<PostWithMeta[]>([]);
     const [loadingPosts, setLoadingPosts] = useState(false);
     const [hasPosted, setHasPosted] = useState(false);
@@ -41,7 +41,9 @@ export function useMission1(studentId: string, classId: string) {
             setSelectedLocation(DEMO_MISSION1.selectedLocation);
             setVideoWatched(DEMO_MISSION1.videoWatched);
             setQuestionAnswered(DEMO_MISSION1.questionAnswered);
-            setQuestionAnswer(DEMO_MISSION1.questionAnswer);
+            if (DEMO_MISSION1.selectedLocation) {
+                setQuestionAnswers({ [DEMO_MISSION1.selectedLocation]: DEMO_MISSION1.questionAnswer });
+            }
             setPosts(DEMO_MISSION1.posts as PostWithMeta[]);
             setHasPosted(DEMO_MISSION1.hasPosted);
             setActiveCase(DEMO_MISSION1.selectedLocation);
@@ -57,34 +59,48 @@ export function useMission1(studentId: string, classId: string) {
 
                 if (res.ok && result.data) {
                     const data = result.data;
-                    const step = (data.mission1_step ?? 1) as Step;
-                    setCurrentStep(step);
+                    const isFinished = data.mission1_status === "completed";
+                    
+                    // Jika sudah selesai, kita buat "Fresh Exploration"
+                    if (isFinished) {
+                        setCurrentStep(1); // Mulai dari pilih lokasi lagi
+                        setSelectedLocation(null); // Kosongkan pilihan (hanya lokal)
+                        setActiveCase(null);
+                        setQuestionAnswers({}); // Kosongkan jawaban (hanya lokal)
+                        setVideoWatched(false);
+                    } else {
+                        // Jika belum selesai, muat data asli dari DB
+                        const step = (data.mission1_step ?? 1) as Step;
+                        setCurrentStep(step);
 
-                    if (data.mission1_case) {
-                        const legacyMap: Record<string, CaseTopic> = {
-                            tumpukan_sampah: "sampah",
-                            kendaraan_listrik: "kendaraan"
-                        };
-                        const normalizedCase = legacyMap[data.mission1_case] || (data.mission1_case as CaseTopic);
-                        setSelectedLocation(normalizedCase);
-                        setActiveCase(normalizedCase);
-                    }
-
-                    if (step >= 2) setVideoWatched(data.mission1_video_watched ?? false);
-
-                    if (step >= 3) {
-                        setQuestionAnswered(!!data.mission1_question_answer);
-                        if (data.mission1_question_answer) setQuestionAnswer(data.mission1_question_answer);
-                    }
-
-                    if (step === 4) {
-                        const postsRes = await fetch(`/api/mission1/${classId}/posts`);
-                        const postsResult = postsRes.ok ? await postsRes.json() : { data: [] };
-                        if (postsRes.ok) {
-                            const fetchedPosts: PostWithMeta[] = postsResult.data ?? [];
-                            setPosts(fetchedPosts);
-                            setHasPosted(fetchedPosts.some((p) => p.student_id === studentId));
+                        let normalizedCase: CaseTopic | null = null;
+                        if (data.mission1_case) {
+                            const legacyMap: Record<string, CaseTopic> = {
+                                tumpukan_sampah: "sampah",
+                                kendaraan_listrik: "kendaraan"
+                            };
+                            normalizedCase = legacyMap[data.mission1_case] || (data.mission1_case as CaseTopic);
+                            setSelectedLocation(normalizedCase);
+                            setActiveCase(normalizedCase);
                         }
+
+                        if (step >= 2) setVideoWatched(data.mission1_video_watched ?? false);
+
+                        if (step >= 3) {
+                            setQuestionAnswered(!!data.mission1_question_answer);
+                            if (data.mission1_question_answer && normalizedCase) {
+                                setQuestionAnswers({ [normalizedCase]: data.mission1_question_answer });
+                            }
+                        }
+                    }
+
+                    // Forum selalu dimuat karena forum bersifat publik dan multi-kasus
+                    const postsRes = await fetch(`/api/mission1/${classId}/posts`);
+                    const postsResult = postsRes.ok ? await postsRes.json() : { data: [] };
+                    if (postsRes.ok) {
+                        const fetchedPosts: PostWithMeta[] = postsResult.data ?? [];
+                        setPosts(fetchedPosts);
+                        setHasPosted(fetchedPosts.some((p) => p.student_id === studentId));
                     }
                 } else {
                     setCurrentStep(1);
@@ -101,20 +117,27 @@ export function useMission1(studentId: string, classId: string) {
     }, [studentId, classId, isDemoMode]);
 
     const fetchPosts = useCallback(async () => {
-        if (!classId || isDemoMode) return;
+        if (!classId || !activeCase || isDemoMode) return;
         setLoadingPosts(true);
         try {
-            const res = await fetch(`/api/mission1/${classId}/posts`);
+            const res = await fetch(`/api/mission1/${classId}/posts?topic=${activeCase}`);
             const result = await res.json();
             if (res.ok) {
                 const fetchedPosts: PostWithMeta[] = result.data ?? [];
                 setPosts(fetchedPosts);
-                if (fetchedPosts.some((p) => p.student_id === studentId)) setHasPosted(true);
+                setHasPosted(fetchedPosts.some((p) => p.student_id === studentId));
             }
         } finally {
             setLoadingPosts(false);
         }
-    }, [classId, studentId, isDemoMode]);
+    }, [classId, studentId, activeCase, isDemoMode]);
+
+    // Re-fetch posts saat pindah kasus
+    useEffect(() => {
+        if (currentStep === 4) {
+            fetchPosts();
+        }
+    }, [activeCase, currentStep, fetchPosts]);
 
     function goToStep(step: Step) {
         setCurrentStep(step);
@@ -168,13 +191,16 @@ export function useMission1(studentId: string, classId: string) {
 
     async function handleQuestionSubmit(answer: string) {
         setQuestionAnswered(true);
-        setQuestionAnswer(answer);
-        if (isDemoMode) return;
-        await fetch(`/api/progress/${studentId}/mission/1`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ mission1_question_answer: answer }),
-        });
+        setQuestionAnswers(prev => ({ ...prev, [activeCase || ""]: answer }));
+        
+        // Hanya simpan ke DB jika sedang menjawab kasus utama yang dipilih
+        if (activeCase === selectedLocation && !isDemoMode) {
+            await fetch(`/api/progress/${studentId}/mission/1`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ mission1_question_answer: answer }),
+            });
+        }
     }
 
     async function submitPost(postData: {
@@ -251,7 +277,6 @@ export function useMission1(studentId: string, classId: string) {
         selectedLocation,
         videoWatched,
         questionAnswered,
-        questionAnswer,
         posts,
         loadingPosts,
         hasPosted,
@@ -265,6 +290,7 @@ export function useMission1(studentId: string, classId: string) {
         fetchPosts,
         activeCase,
         switchActiveCase,
-        goToStep
+        goToStep,
+        questionAnswers // Gunakan yang baru
     };
 }

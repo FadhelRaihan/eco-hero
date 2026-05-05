@@ -158,8 +158,8 @@ export default function Step4Forum({
                         <div className="w-6 h-6 rounded-full flex items-center justify-center">
                             <MessageCircleQuestion className="w-6 h-6 text-[#1A5C0A]" />
                         </div>
-                        <span className="text-xs font-semibold text-[#1A5C0A]">
-                            Diskusi Kelas
+                        <span className="text-xs font-bold text-[#1A5C0A]">
+                            Diskusi: <span className="uppercase">{TOPIC_LABEL[selectedTopic]}</span>
                         </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -168,7 +168,7 @@ export default function Step4Forum({
                             LIVE
                         </div>
                         <span className="text-sm text-[#333333]/50">
-                            {uniqueStudents} pendapat masuk
+                            {uniqueStudents} siswa berdiskusi
                         </span>
                     </div>
                 </div>
@@ -244,39 +244,40 @@ export default function Step4Forum({
 
                 {/* Input bar */}
                 <div className="bg-[#F7FFF4] border-t border-[#DDDDDD] px-3 py-3">
-                    {!hasPosted ? (
-                        <div className="flex gap-2 items-center">
-                            <input
-                                type="text"
-                                value={input}
-                                onChange={(e) => {
-                                    setInput(e.target.value);
-                                    if (error) setError("");
-                                }}
-                                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                                placeholder="Tulis pendapatmu tentang isu yang kamu pilih..."
-                                className="flex-1 h-11 px-4 rounded-xl bg-white border border-[#333333]/15 text-sm focus:outline-none focus:border-[#1A5C0A]/40 transition-colors"
-                            />
-                            <button
-                                onClick={handleSend}
-                                disabled={!input.trim() || submitting}
-                                className={cn(
-                                    "w-11 h-11 rounded-xl flex items-center justify-center transition-all active:scale-95 flex-shrink-0 cursor-pointer",
-                                    input.trim()
-                                        ? "bg-[#B4FF9F] text-[#1A5C0A] hover:bg-[#9AEF85]"
-                                        : "bg-gray-100 text-gray-300 cursor-not-allowed"
-                                )}
-                            >
-                                {submitting ? (
-                                    <Loader2 className="w-6 h-6 animate-spin" />
-                                ) : (
-                                    <SendHorizonal size={20} />
-                                )}
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-2 bg-[#B4FF9F]/20 rounded-xl px-4 py-2.5 text-sm sm:text-base">
-                            <Check size={20} className="text-[#1A5C0A] flex-shrink-0" /> Pendapatmu sudah terkirim ke forum
+                    <div className="flex gap-2 items-center">
+                        <input
+                            type="text"
+                            value={input}
+                            onChange={(e) => {
+                                setInput(e.target.value);
+                                if (error) setError("");
+                            }}
+                            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                            placeholder={`Tulis pendapatmu tentang isu ${TOPIC_LABEL[selectedTopic]}...`}
+                            className="flex-1 h-11 px-4 rounded-xl bg-white border border-[#333333]/15 text-sm focus:outline-none focus:border-[#1A5C0A]/40 transition-colors"
+                        />
+                        <button
+                            onClick={handleSend}
+                            disabled={!input.trim() || submitting}
+                            className={cn(
+                                "w-11 h-11 rounded-xl flex items-center justify-center transition-all active:scale-95 flex-shrink-0 cursor-pointer",
+                                input.trim()
+                                    ? "bg-[#B4FF9F] text-[#1A5C0A] hover:bg-[#9AEF85]"
+                                    : "bg-gray-100 text-gray-300 cursor-not-allowed"
+                            )}
+                        >
+                            {submitting ? (
+                                <Loader2 className="w-6 h-6 animate-spin" />
+                            ) : (
+                                <SendHorizonal size={20} />
+                            )}
+                        </button>
+                    </div>
+
+                    {hasPosted && (
+                        <div className="flex items-center gap-1.5 mt-2 px-1 opacity-70">
+                            <Check size={14} className="text-[#1A5C0A]" /> 
+                            <span className="text-[10px] font-bold text-[#1A5C0A] uppercase tracking-wider">Kamu sudah berpartisipasi di diskusi ini</span>
                         </div>
                     )}
 
