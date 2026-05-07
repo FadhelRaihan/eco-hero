@@ -34,7 +34,36 @@ export async function GET(
         const { data, error } = await query;
         if (error) throw error;
 
-        return NextResponse.json({ data });
+        const { data: progressData } = await supabase
+            .from("mission_progress")
+            .select("student_id, mission1_question_answer")
+            .eq("class_id", classId)
+            .eq("mission_number", 1);
+
+        const progressMap = new Map<string, string | null>();
+        if (progressData) {
+            (progressData as { student_id: string; mission1_question_answer: string | null }[]).forEach((p) => {
+                progressMap.set(p.student_id, p.mission1_question_answer);
+            });
+        }
+
+        interface ForumPostWithComments {
+            id: string;
+            case_topic: string;
+            perspective_env: string;
+            perspective_soc: string;
+            created_at: string;
+            student_id: string;
+            users: { id: string; full_name: string } | null;
+            mission1_forum_comments: { count: number }[];
+        }
+
+        const postsWithAnswers = (data as unknown as ForumPostWithComments[] ?? []).map((post) => ({
+            ...post,
+            mission1_question_answer: progressMap.get(post.student_id) || null,
+        }));
+
+        return NextResponse.json({ data: postsWithAnswers });
     } catch (error) {
         console.error("GET /api/mission1/posts error:", error);
         return NextResponse.json(
@@ -83,7 +112,19 @@ export async function POST(
 
         if (error) throw error;
 
-        return NextResponse.json({ data }, { status: 201 });
+        const { data: progress } = await supabase
+            .from("mission_progress")
+            .select("mission1_question_answer")
+            .eq("student_id", body.student_id)
+            .eq("mission_number", 1)
+            .single();
+
+        const dataWithAnswer = {
+            ...data,
+            mission1_question_answer: progress?.mission1_question_answer || null,
+        };
+
+        return NextResponse.json({ data: dataWithAnswer }, { status: 201 });
     } catch (error) {
         console.error("POST /api/mission1/posts error:", error);
         return NextResponse.json(

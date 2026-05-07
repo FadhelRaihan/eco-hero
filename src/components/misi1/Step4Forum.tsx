@@ -17,6 +17,24 @@ const TOPIC_COLOR: Record<CaseTopic, string> = {
     kendaraan: "bg-[#B4FF9F] text-[#1A5C0A]",
 };
 
+const OPTION_LABEL: Record<string, string> = {
+    setuju: "Setuju",
+    tidak_setuju: "Tidak Setuju",
+    kendaraan_listrik: "Kendaraan Listrik",
+    kendaraan_bbm: "Kendaraan BBM",
+    kendaraan_umum: "Kendaraan Umum",
+    berjalan_kaki: "Berjalan Kaki",
+};
+
+const OPTION_COLOR: Record<string, string> = {
+    setuju: "bg-red-50 text-red-700 border-red-200",
+    tidak_setuju: "bg-gray-50 text-gray-700 border-gray-200",
+    kendaraan_listrik: "bg-cyan-50 text-cyan-700 border-cyan-200",
+    kendaraan_bbm: "bg-amber-50 text-amber-700 border-amber-200",
+    kendaraan_umum: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    berjalan_kaki: "bg-emerald-50 text-emerald-700 border-emerald-200",
+};
+
 function timeAgo(dateStr: string) {
     const utcStr = dateStr.endsWith("Z") || dateStr.includes("+")
         ? dateStr
@@ -64,6 +82,7 @@ interface Step4ForumProps {
         perspective_soc: string;
         created_at: string;
         users: { full_name: string };
+        mission1_question_answer?: string | null;
     }[];
     loadingPosts: boolean;
     hasPosted: boolean;
@@ -217,6 +236,14 @@ export default function Step4Forum({
                                             )}>
                                                 {TOPIC_LABEL[post.case_topic as CaseTopic]}
                                             </span>
+                                            {post.mission1_question_answer && (
+                                                <span className={cn(
+                                                    "text-[9px] font-bold px-2 py-0.5 rounded-full border",
+                                                    OPTION_COLOR[post.mission1_question_answer] || "bg-gray-50 text-gray-600 border-gray-200"
+                                                )}>
+                                                    Pilihan: {OPTION_LABEL[post.mission1_question_answer] || post.mission1_question_answer}
+                                                </span>
+                                            )}
                                             {isOwn && (
                                                 <span className="text-[9px] bg-[#B4FF9F] text-[#1A5C0A] font-bold px-2 py-0.5 rounded-full">
                                                     Kamu

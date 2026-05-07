@@ -36,6 +36,12 @@ export const MISSION_1_DATA: Record<CaseTopic, CaseData> = {
             {
                 id: "pk-2",
                 type: "video",
+                title: "Kondisi TPA Sari Mukti",
+                videoUrl: "https://youtube.com/shorts/oVxgmln4awM?si=oF7atYi1g7-uZ0lq",
+            },
+            {
+                id: "pk-2",
+                type: "video",
                 title: "PLTSa: Solusi atau Masalah Baru?",
                 videoUrl: "https://www.youtube.com/shorts/uBV2lv4sDb4",
             },

@@ -44,7 +44,7 @@ export function useMission1(studentId: string, classId: string) {
             if (DEMO_MISSION1.selectedLocation) {
                 setQuestionAnswers({ [DEMO_MISSION1.selectedLocation]: DEMO_MISSION1.questionAnswer });
             }
-            setPosts(DEMO_MISSION1.posts as PostWithMeta[]);
+            setPosts(DEMO_MISSION1.posts as unknown as PostWithMeta[]);
             setHasPosted(DEMO_MISSION1.hasPosted);
             setActiveCase(DEMO_MISSION1.selectedLocation);
             setInitialized(true);
@@ -222,6 +222,7 @@ export function useMission1(studentId: string, classId: string) {
                     created_at: new Date().toISOString(),
                     users: { id: studentId, full_name: "Andi Pratama (Demo)" },
                     mission1_forum_comments: [{ count: 0 }],
+                    mission1_question_answer: questionAnswers[postData.case_topic] || (postData.case_topic === "sampah" ? "setuju" : "kendaraan_umum"),
                 } as PostWithMeta;
                 setPosts((prev) => [demoPost, ...prev]);
                 setHasPosted(true);
