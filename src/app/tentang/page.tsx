@@ -11,7 +11,7 @@ export default function TentangPengembangPage() {
         {
             name: "Ismail Nursidik",
             role: "Inisiator dan Peneliti",
-            desc: "Mahasiswa Pascasarjana UPI Kampus Cibiru yang menggagas pengembangan bahan ajar interaktif berbasis Socio Scientific Issues sebagai bagian dari penelitian tesis, dengan fokus pada Ecological Citizenship siswa sekolah dasar.",
+            desc: "Mahasiswa Pascasarjana UPI Kampus Cibiru yang menggagas pengembangan media interaktif berbasis Socio Scientific Issues sebagai bagian dari penelitian tesis, dengan fokus pada Ecological Citizenship siswa sekolah dasar.",
             image: "/assets/fotoTim/Penulis.jpg"
         },
         {
@@ -21,9 +21,9 @@ export default function TentangPengembangPage() {
             image: "/assets/fotoTim/Dosbing1.jpg"
         },
         {
-            name: "Dr. Dinie Anggraeni Dewi S.Pd., M.Pd",
+            name: "Dr. Dinie Anggraeni Dewi, S.Pd., M.Pd., M.H.",
             role: "Dosen Pembimbing II",
-            desc: "Sebagai pembimbing dalam penguatan konsep pendidikan, pengembangan bahan ajar, serta kesesuaian bahan ajar dengan kebutuhan peserta didik",
+            desc: "Sebagai pembimbing dalam penguatan konsep pendidikan, pengembangan media, serta kesesuaian media dengan kebutuhan peserta didik",
             image: "/assets/fotoTim/Dosbing2.jpg"
         }
     ];
@@ -32,7 +32,7 @@ export default function TentangPengembangPage() {
         {
             name: "Rootly",
             role: "Studio Pengembang",
-            desc: "Berperan sebagai partner studio pengembang dalam implementasi teknis, desain sistem, pengembangan aplikasi, serta visualisasi bahan ajar berbasis teknologi interaktif",
+            desc: "Berperan sebagai partner studio pengembang dalam implementasi teknis, desain sistem, pengembangan aplikasi, serta visualisasi media berbasis teknologi interaktif",
             image: "/assets/Logo-Icon.svg",
             social: {
                 github: "https://github.com/FadhelRaihan",
@@ -73,7 +73,7 @@ export default function TentangPengembangPage() {
                 <h1 className="text-4xl md:text-5xl font-black text-[#333333] mb-6 tracking-tight">Tentang <span className="text-[#1A5C0A]">Eco Hero</span></h1>
                 <div className="bg-white rounded-[32px] p-8 md:p-10 border-2 border-[#1A5C0A]/10 shadow-xl shadow-[#1A5C0A]/5 text-left">
                     <p className="text-lg md:text-xl text-[#333333]/70 leading-relaxed mb-6 font-medium">
-                        <span className="font-black text-[#1A5C0A]">Eco Hero</span> adalah bahan ajar interaktif berbasis <span className="italic text-[#333333]">Socio Scientific Issue</span> yang dirancang dalam bentuk website dengan tujuan untuk meningkatkan <span className="italic text-[#333333]">Ecological Citizenship</span> siswa terutama di sekolah dasar secara aktif dan menyenangkan.
+                        <span className="font-black text-[#1A5C0A]">Eco Hero</span> adalah media interaktif berbasis <span className="italic text-[#333333]">Socio Scientific Issue</span> yang dirancang dalam bentuk website dengan tujuan untuk meningkatkan <span className="italic text-[#333333]">Ecological Citizenship</span> siswa terutama di sekolah dasar secara aktif dan menyenangkan.
                     </p>
                     <p className="text-[#333333]/60 leading-relaxed mb-8">
                         Siswa akan melewati serangkaian misi yang dirancang secara bertahap mulai dari mengidentifikasi isu lingkungan, merancang Solusi Bersama tim, merencanakan aksi nyata hingga mengdokumentasikan hasilnya.
